@@ -386,60 +386,86 @@ pre.code code { background: none; padding: 0; font-size: inherit; }
 
 .docs {
   display: grid;
-  grid-template-columns: 11rem minmax(0, 40rem);
-  gap: 4rem;
-  padding: 2.5rem 0 6rem;
+  grid-template-columns: 10rem minmax(0, 38rem);
+  gap: 5rem;
+  padding: 3.5rem 0 7rem;
 }
 @media (max-width: 48rem) {
-  .docs { grid-template-columns: minmax(0, 1fr); gap: 2rem; }
+  .docs { grid-template-columns: minmax(0, 1fr); gap: 2rem; padding-top: 2rem; }
 }
 
 .docs-nav {
   position: sticky;
-  top: calc(var(--nav) + 0.75rem);
+  top: calc(var(--nav) + 1.25rem);
   align-self: start;
   display: grid;
-  gap: 0.65rem;
+  gap: 0.85rem;
   font-size: 0.875rem;
   color: var(--ink-soft);
 }
 .docs-nav a[aria-current="page"] { color: var(--ink); }
 
-.article h1 { font-size: clamp(2rem, 4vw, 2.75rem); }
-.article h2 { margin: 2.5rem 0 0.75rem; font-size: 1.35rem; scroll-margin-top: calc(var(--nav) + 1rem); }
-.article p { margin: 0.85rem 0 0; color: var(--ink-soft); max-width: 48ch; }
-.article ul { margin: 0.85rem 0 0; padding-left: 1.1rem; color: var(--ink-soft); max-width: 48ch; }
-.article li code { word-break: break-all; }
-.article li + li { margin-top: 0.35rem; }
-.article pre.code { margin-top: 1.15rem; }
-.article .btn { margin-top: 1.5rem; }
-.article a:not(.btn) {
-  text-decoration: underline;
-  text-underline-offset: 0.18em;
-}
-
-.base {
-  margin: 1.5rem 0 0;
-  padding: 1.1rem 0 0.15rem;
-  border-top: 1px solid var(--hairline);
-  max-width: 48ch;
-}
-.base dt {
-  margin: 0;
-  font-size: 0.6875rem;
+.kicker {
+  margin: 0 0 0.85rem;
+  font-size: 0.75rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--ink-soft);
 }
-.base dd {
-  margin: 0.2rem 0 0.85rem;
-  font-family: "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+.article h1 {
+  font-size: clamp(2.15rem, 4.2vw, 3rem);
+  max-width: 16ch;
+}
+.article h2 {
+  margin: 3.25rem 0 0;
+  font-size: 1.15rem;
+  letter-spacing: -0.02em;
+  scroll-margin-top: calc(var(--nav) + 1rem);
+}
+.article p { margin: 0.9rem 0 0; color: var(--ink-soft); max-width: 44ch; }
+.article ul { margin: 1rem 0 0; padding-left: 1.1rem; color: var(--ink-soft); max-width: 44ch; }
+.article li code { word-break: break-all; }
+.article li + li { margin-top: 0.45rem; }
+.article pre.code { margin-top: 1.15rem; }
+.article .btn { margin-top: 1.5rem; }
+.article a:not(.btn):not(.ends a):not(.map a) {
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+}
+
+.ends {
+  margin: 2.25rem 0 0;
+  max-width: 38rem;
+}
+.ends a {
+  display: grid;
+  grid-template-columns: 6.5rem minmax(0, 1fr);
+  gap: 1.25rem;
+  align-items: baseline;
+  padding: 0.95rem 0;
+  border-top: 1px solid var(--hairline);
+  text-decoration: none;
+}
+.ends a:last-child { border-bottom: 1px solid var(--hairline); }
+.ends span {
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+.ends code {
+  color: var(--ink);
   font-size: 0.8125rem;
   word-break: break-all;
-  color: var(--ink);
 }
-.base dd:last-child { margin-bottom: 0; }
-.base dd a { text-decoration: none; }
+
+.article .costs {
+  margin: 1.25rem 0 0;
+  max-width: 38rem;
+}
+.article .costs article h3 { margin-bottom: 0.55rem; }
+.article .costs article p { margin: 0; max-width: none; }
 
 .map { margin: 2rem 0 0; display: grid; gap: 0; }
 .map a {

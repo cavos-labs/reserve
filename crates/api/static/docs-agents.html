@@ -47,20 +47,27 @@
     </nav>
 
     <article class="article">
-      <h1>For agents</h1>
+      <p class="kicker">Agents</p>
+      <h1>Do not scrape the HTML.</h1>
       <p>
-        If you are an LLM or an agent integrating Reserve, fetch the
-        machine-readable files first. Do not scrape this HTML.
+        Fetch the machine-readable files. They carry the hosted URL, the
+        shapes, and the two costs Stellar charges in XLM.
       </p>
 
-      <dl class="base">
-        <dt>Site</dt>
-        <dd><a href="https://reserve.cavos.xyz">https://reserve.cavos.xyz</a></dd>
-        <dt>Testnet API</dt>
-        <dd><a href="https://reserve.cavos.xyz/testnet">https://reserve.cavos.xyz/testnet</a></dd>
-        <dt>Mainnet API</dt>
-        <dd><a href="https://reserve.cavos.xyz/mainnet">https://reserve.cavos.xyz/mainnet</a></dd>
-      </dl>
+      <div class="ends">
+        <a href="https://reserve.cavos.xyz">
+          <span>Site</span>
+          <code>https://reserve.cavos.xyz</code>
+        </a>
+        <a href="https://reserve.cavos.xyz/testnet">
+          <span>Testnet</span>
+          <code>https://reserve.cavos.xyz/testnet</code>
+        </a>
+        <a href="https://reserve.cavos.xyz/mainnet">
+          <span>Mainnet</span>
+          <code>https://reserve.cavos.xyz/mainnet</code>
+        </a>
+      </div>
 
       <h2>Fetch these</h2>
       <pre class="code"><code>curl -s https://reserve.cavos.xyz/llms.txt
@@ -79,8 +86,9 @@ curl -s https://reserve.cavos.xyz/testnet/v1/tokens</code></pre>
 
 - Network: testnet (or mainnet).
 - Users pay reserves and fees in a token. They never hold XLM.
-- This is not OpenZeppelin Relayer. That product charges fees in tokens. This one also sponsors the reserves that let the account exist.
+- Covering only the network fee is not enough: the account still needs sponsored reserves to exist at 0 XLM.
 - Use the SDK. Do not call /v1/build and sign the bytes yourself.
+- Do not send arbitrary XDR, InvokeHostFunction, or accountMerge. Four operations only.
 - Token identity is CODE:ISSUER. Never an asset code alone.
 - Only classic G… accounts. Refuse C… contract ids.
 - No API key is required. A key only raises the rate limit.
@@ -91,24 +99,9 @@ Mainnet: https://reserve.cavos.xyz/mainnet
 
 [paste https://reserve.cavos.xyz/llms-full.txt]</code></pre>
 
-      <h2 id="not-the-openzeppelin-relayer">Not the OpenZeppelin Relayer</h2>
-      <p>
-        Do not treat this as
-        <a href="https://docs.openzeppelin.com/relayer/stellar">OpenZeppelin Relayer</a>.
-        That product is a self-hosted submit pipeline. In sponsored mode it
-        charges <strong>network fees</strong> in a token. It accepts arbitrary
-        operations and Soroban. A source account is assumed.
-      </p>
-      <p>
-        Reserve sponsors <strong>reserves and fees</strong> so a classic
-        account can exist with a 0 XLM minimum. Hosted at the URLs above.
-        Four operations. No Soroban. No arbitrary XDR. Activate from a
-        claimable balance; never create the account empty.
-      </p>
-
       <h2>Rules</h2>
       <ul>
-        <li>This is not OpenZeppelin Relayer. Do not send <code>InvokeHostFunction</code>, <code>accountMerge</code>, or a raw transaction XDR to quote.</li>
+        <li>A general submit pipeline is a different API. Do not send <code>InvokeHostFunction</code>, <code>accountMerge</code>, or a raw transaction XDR to quote.</li>
         <li>Install <code>@cavos/reserve</code> and <code>@stellar/stellar-sdk</code>. <code>new Reserve("testnet")</code> already pins <code>https://reserve.cavos.xyz/testnet</code>.</li>
         <li>Prefer <code>pay</code>, <code>activate</code>, and <code>send</code>. They keep the request the caller made and refuse a quote or a built transaction that does not match it.</li>
         <li>Calling HTTP yourself gives that check up. If you must, verify locally with <code>verifyTransaction</code> against the request you made, not against the sealed quote alone.</li>

@@ -47,62 +47,49 @@
     </nav>
 
     <article class="article">
-      <h1>Reserve</h1>
+      <p class="kicker">Docs</p>
+      <h1>A user who holds no XLM can exist.</h1>
       <p>
-        A Stellar sponsor so a user can exist and transact by paying reserves
-        and fees in a held token. Classic <code>G…</code> accounts only.
-      </p>
-      <p>
-        There is no signup. Call the API without a header. A key is a bigger
-        rate-limit bucket, not a permission. Testnet and mainnet are the same
-        endpoints under <code>/testnet</code> and <code>/mainnet</code>.
+        Reserve sponsors the lumens Stellar locks and the lumens it spends.
+        The user pays for both in a token they already hold. Classic
+        <code>G…</code> accounts only. No signup, no header.
       </p>
 
-      <dl class="base">
-        <dt>Site</dt>
-        <dd><a href="https://reserve.cavos.xyz">https://reserve.cavos.xyz</a></dd>
-        <dt>Testnet API</dt>
-        <dd><a href="https://reserve.cavos.xyz/testnet">https://reserve.cavos.xyz/testnet</a></dd>
-        <dt>Mainnet API</dt>
-        <dd><a href="https://reserve.cavos.xyz/mainnet">https://reserve.cavos.xyz/mainnet</a></dd>
-      </dl>
+      <div class="ends">
+        <a href="https://reserve.cavos.xyz">
+          <span>Site</span>
+          <code>https://reserve.cavos.xyz</code>
+        </a>
+        <a href="https://reserve.cavos.xyz/testnet">
+          <span>Testnet</span>
+          <code>https://reserve.cavos.xyz/testnet</code>
+        </a>
+        <a href="https://reserve.cavos.xyz/mainnet">
+          <span>Mainnet</span>
+          <code>https://reserve.cavos.xyz/mainnet</code>
+        </a>
+      </div>
+
+      <h2 id="two-costs">Two costs</h2>
+      <div class="pair costs">
+        <article>
+          <h3>Fee</h3>
+          <p>XLM spent on the network. A fee-bump can take this in a token, for an account that already exists.</p>
+        </article>
+        <article>
+          <h3>Reserve</h3>
+          <p>XLM locked so the account can exist. Without a sponsor, the user still needs lumens sitting there.</p>
+        </article>
+      </div>
       <p>
-        Agents: fetch <a href="/llms-full.txt">llms-full.txt</a> and
-        <a href="/openapi.yaml">openapi.yaml</a>. Do not scrape this HTML.
-        See <a href="/docs/agents">For agents</a>.
+        Covering only the fee leaves the second cost on the user. Reserve
+        takes both in the same transaction. The minimum balance stays at zero.
       </p>
 
-      <h2 id="not-the-openzeppelin-relayer">Not the OpenZeppelin Relayer</h2>
-      <p>
-        Stellar spends XLM as a <em>fee</em> and locks XLM as a <em>reserve</em>.
-        Those are different costs. The
-        <a href="https://docs.openzeppelin.com/relayer/stellar">OpenZeppelin Relayer</a>
-        is infrastructure you run to submit transactions. In sponsored mode it
-        lets a user pay <strong>fees</strong> in a token. You bring the
-        operations or the XDR — including Soroban. Creating an account and
-        sponsoring its reserves are operations you can put in the envelope if
-        you already know how; they are not what that product sells.
-      </p>
-      <p>
-        Reserve is a hosted sponsor. The user pays <strong>reserves and
-        fees</strong> in the same token, in the same transaction. A
-        <code>G…</code> address can be created with a zero XLM minimum
-        (CAP-33) and fee-bumped (CAP-15). An address that holds only USDC can
-        exist and transact. It never holds XLM.
-      </p>
+      <h2>What it is not</h2>
       <ul>
-        <li>OZ Relayer: you operate it. Arbitrary operations, including Soroban. Fees in tokens if you configure it. A source account is assumed.</li>
-        <li>Reserve: hosted. Four operations. Classic accounts only. Activate from a claimable balance. No arbitrary XDR.</li>
-      </ul>
-      <p>
-        Need Soroban or a general submit pipeline? Use a relayer. Need a user
-        who does not hold XLM to exist? This.
-      </p>
-
-      <h2>What else it is not</h2>
-      <ul>
-        <li>Not custodial. Reserve never holds a user key and never adds itself as a signer.</li>
-        <li>Not Soroban. Contract ids (<code>C…</code>) are refused.</li>
+        <li>Not a general submit pipeline. Four operations, no arbitrary XDR, no Soroban.</li>
+        <li>Not custodial. It never holds a user key and never adds itself as a signer.</li>
         <li>Not a dashboard. Signing a challenge again returns the same key. Nothing is stored.</li>
       </ul>
 
@@ -121,7 +108,7 @@
         </a>
         <a href="/docs/agents">
           <strong>Agents</strong>
-          <span>llms-full.txt, OpenAPI, prompt, and the rules.</span>
+          <span>Plain-text docs and OpenAPI. Do not scrape the HTML.</span>
         </a>
       </div>
     </article>

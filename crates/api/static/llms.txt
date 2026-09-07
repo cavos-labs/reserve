@@ -1,6 +1,6 @@
 # Reserve
 
-> A Stellar sponsor so a user can exist and transact by paying reserves and fees in a held token. Classic G… accounts only. No API key required. Not the OpenZeppelin Relayer: that product charges fees in tokens; this one also sponsors the reserves that let the account exist without XLM.
+> A Stellar sponsor so a user can exist and transact by paying reserves and fees in a held token. Classic G… accounts only. No API key required. Stellar has two XLM costs — the fee and the reserve. Covering only the fee still leaves the account needing lumens to exist.
 
 Base URL: https://reserve.cavos.xyz
 Testnet API: https://reserve.cavos.xyz/testnet
@@ -10,7 +10,7 @@ If you are an agent, fetch https://reserve.cavos.xyz/llms-full.txt and https://r
 
 ## Docs
 
-- [Overview](https://reserve.cavos.xyz/docs): what Reserve is and is not. Base URL. Not the OpenZeppelin Relayer.
+- [Overview](https://reserve.cavos.xyz/docs): two costs, hosted URL, what it is not
 - [Quickstart](https://reserve.cavos.xyz/docs/quickstart): install, pay, activate an account with a token
 - [API](https://reserve.cavos.xyz/docs/api): quote, build, submit, tokens, optional keys
 - [For agents](https://reserve.cavos.xyz/docs/agents): fetch list, prompt, invariants

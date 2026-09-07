@@ -45,26 +45,29 @@
     </nav>
 
     <article class="article">
-      <h1>API</h1>
+      <p class="kicker">API</p>
+      <h1>Quote, build, submit.</h1>
       <p>
         Quotes travel as an HMAC-signed payload. At submit the service rebuilds
-        the inner transaction from the quote and compares XDR byte for byte.
-        That comparison is the security gate. Prefix every path with
-        <code>/testnet</code> or <code>/mainnet</code>.
+        the inner transaction and compares XDR byte for byte. Prefix every
+        path with <code>/testnet</code> or <code>/mainnet</code>.
+        Spec: <a href="/openapi.yaml">openapi.yaml</a>.
       </p>
 
-      <dl class="base">
-        <dt>Site</dt>
-        <dd><a href="https://reserve.cavos.xyz">https://reserve.cavos.xyz</a></dd>
-        <dt>Testnet API</dt>
-        <dd><a href="https://reserve.cavos.xyz/testnet">https://reserve.cavos.xyz/testnet</a></dd>
-        <dt>Mainnet API</dt>
-        <dd><a href="https://reserve.cavos.xyz/mainnet">https://reserve.cavos.xyz/mainnet</a></dd>
-      </dl>
-      <p>
-        OpenAPI: <a href="/openapi.yaml">/openapi.yaml</a>.
-        Agents: <a href="/docs/agents">For agents</a>.
-      </p>
+      <div class="ends">
+        <a href="https://reserve.cavos.xyz">
+          <span>Site</span>
+          <code>https://reserve.cavos.xyz</code>
+        </a>
+        <a href="https://reserve.cavos.xyz/testnet">
+          <span>Testnet</span>
+          <code>https://reserve.cavos.xyz/testnet</code>
+        </a>
+        <a href="https://reserve.cavos.xyz/mainnet">
+          <span>Mainnet</span>
+          <code>https://reserve.cavos.xyz/mainnet</code>
+        </a>
+      </div>
 
       <h2>POST /{network}/v1/quote</h2>
       <p>

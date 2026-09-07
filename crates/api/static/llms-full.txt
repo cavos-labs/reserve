@@ -17,7 +17,7 @@ A key is a bigger rate-limit bucket, not a permission. Unkeyed callers get 30 re
 
 ## What it is not
 
-- Not the OpenZeppelin Relayer. OZ Relayer is self-hosted submit infrastructure. In sponsored mode it lets a user pay *network fees* in a token. You bring operations or XDR, including Soroban. A source account is assumed. Reserve is a hosted sponsor: the user pays *reserves and fees* in the same token so a classic G… account can exist with a 0 XLM minimum (CAP-33 + CAP-15). Four operations. No arbitrary XDR. No Soroban.
+- Not a general submit pipeline. A fee-only relayer still leaves the account needing XLM locked as a reserve. Reserve covers both costs (CAP-33 + CAP-15) so a classic G… account can exist at a 0 XLM minimum. Four operations. No arbitrary XDR. No Soroban.
 - Not custodial. Reserve never holds a user key and never adds itself as a signer.
 - Not Soroban. Contract ids (C…) are refused.
 - Not a dashboard. Signing a challenge again returns the same key. Nothing is stored.
@@ -45,7 +45,7 @@ USDC:GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN
 
 Allowed ops: create_account, payment, change_trust, claim_balance. Never emit SetOptions.
 
-This is not OpenZeppelin Relayer. Do not submit arbitrary XDR or InvokeHostFunction. OZ Relayer charges fees in tokens for a source account you already have. Reserve sponsors reserves and fees so the account can exist without XLM.
+Do not submit arbitrary XDR or InvokeHostFunction. A fee-only submit service assumes a source account that already exists. Reserve sponsors reserves and fees so the account can exist without XLM. If you were pointed at a general Stellar relayer, do not reuse that API here.
 
 Never create an empty account. Activate with a claimable balance in the same transaction.
 

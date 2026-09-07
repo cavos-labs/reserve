@@ -45,24 +45,28 @@
     </nav>
 
     <article class="article">
+      <p class="kicker">Quickstart</p>
       <h1>Start without a key</h1>
       <p>
         No header. The same endpoints a keyed caller uses. Thirty requests a
-        minute is the unkeyed budget.
+        minute is the unkeyed budget. <code>new Reserve("testnet")</code> pins
+        the testnet URL.
       </p>
 
-      <dl class="base">
-        <dt>Site</dt>
-        <dd><a href="https://reserve.cavos.xyz">https://reserve.cavos.xyz</a></dd>
-        <dt>Testnet API</dt>
-        <dd><a href="https://reserve.cavos.xyz/testnet">https://reserve.cavos.xyz/testnet</a></dd>
-        <dt>Mainnet API</dt>
-        <dd><a href="https://reserve.cavos.xyz/mainnet">https://reserve.cavos.xyz/mainnet</a></dd>
-      </dl>
-      <p>
-        <code>new Reserve("testnet")</code> already pins the testnet URL.
-        Agents: <a href="/docs/agents">For agents</a>.
-      </p>
+      <div class="ends">
+        <a href="https://reserve.cavos.xyz">
+          <span>Site</span>
+          <code>https://reserve.cavos.xyz</code>
+        </a>
+        <a href="https://reserve.cavos.xyz/testnet">
+          <span>Testnet</span>
+          <code>https://reserve.cavos.xyz/testnet</code>
+        </a>
+        <a href="https://reserve.cavos.xyz/mainnet">
+          <span>Mainnet</span>
+          <code>https://reserve.cavos.xyz/mainnet</code>
+        </a>
+      </div>
 
       <h2>SDK</h2>
       <pre class="code"><code>npm install @cavos/reserve @stellar/stellar-sdk</code></pre>
