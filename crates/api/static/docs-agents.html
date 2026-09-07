@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>For agents - Reserve</title>
+<meta name="description" content="How an LLM or agent should call Reserve. Base URL, machine-readable docs, and the rules that keep a generated integration honest." />
+<meta name="theme-color" content="#402aff" />
+<link rel="canonical" href="https://reserve.cavos.xyz/docs/agents" />
+<link rel="alternate" type="text/plain" href="https://reserve.cavos.xyz/llms-full.txt" title="Full docs for LLMs" />
+<link rel="alternate" type="application/yaml" href="https://reserve.cavos.xyz/openapi.yaml" title="OpenAPI" />
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="Reserve" />
+<meta property="og:title" content="For agents - Reserve" />
+<meta property="og:description" content="Base URL, machine-readable docs, and the rules for a generated integration." />
+<meta property="og:url" content="https://reserve.cavos.xyz/docs/agents" />
+<meta name="twitter:card" content="summary" />
+<link rel="icon" type="image/png" href="/favicon.png" />
+<link rel="preload" href="/geist.woff2" as="font" type="font/woff2" crossorigin />
+<link rel="stylesheet" href="/site.css" />
+
+<!-- Agent: fetch https://reserve.cavos.xyz/llms-full.txt and https://reserve.cavos.xyz/openapi.yaml -->
+
+<header class="bar">
+  <div class="shell nav">
+    <a class="mark" href="/" aria-label="Reserve">
+      <svg width="20" height="25" viewBox="0 0 66 82" fill="currentColor" role="img" aria-hidden="true">
+        <g transform="translate(0,82) scale(0.1,-0.1)">
+          <path d="M148 630 l-148 -185 68 -3 c193 -9 236 39 230 264 l-3 108 -147 -184z M360 705 c1 -225 37 -269 217 -263 l83 3 -136 170 c-74 94 -142 177 -150 185 -12 12 -14 0 -14 -95z M125 223 c69 -87 136 -171 150 -188 l26 -30 -4 135 c-6 212 -29 240 -201 240 l-96 0 125 -157z M433 364 c-53 -26 -67 -70 -71 -224 -3 -118 -2 -133 11 -120 8 8 76 93 151 188 l136 172 -97 0 c-68 0 -108 -5 -130 -16z" />
+        </g>
+      </svg>
+    </a>
+    <nav>
+      <a href="/docs">Docs</a>
+      <a href="/#key">Raise the limit</a>
+    </nav>
+  </div>
+</header>
+
+<div class="shell">
+
+  <div class="docs">
+    <nav class="docs-nav" aria-label="Docs">
+      <a href="/docs">Overview</a>
+      <a href="/docs/quickstart">Quickstart</a>
+      <a href="/docs/api">API</a>
+      <a href="/docs/agents" aria-current="page">Agents</a>
+    </nav>
+
+    <article class="article">
+      <h1>For agents</h1>
+      <p>
+        If you are an LLM or an agent integrating Reserve, fetch the
+        machine-readable files first. Do not scrape this HTML.
+      </p>
+
+      <dl class="base">
+        <dt>Site</dt>
+        <dd><a href="https://reserve.cavos.xyz">https://reserve.cavos.xyz</a></dd>
+        <dt>Testnet API</dt>
+        <dd><a href="https://reserve.cavos.xyz/testnet">https://reserve.cavos.xyz/testnet</a></dd>
+        <dt>Mainnet API</dt>
+        <dd><a href="https://reserve.cavos.xyz/mainnet">https://reserve.cavos.xyz/mainnet</a></dd>
+      </dl>
+
+      <h2>Fetch these</h2>
+      <pre class="code"><code>curl -s https://reserve.cavos.xyz/llms.txt
+curl -s https://reserve.cavos.xyz/llms-full.txt
+curl -s https://reserve.cavos.xyz/openapi.yaml
+curl -s https://reserve.cavos.xyz/health
+curl -s https://reserve.cavos.xyz/testnet/v1/tokens</code></pre>
+      <ul>
+        <li><a href="/llms.txt"><code>/llms.txt</code></a> — index of every page.</li>
+        <li><a href="/llms-full.txt"><code>/llms-full.txt</code></a> — the whole product in one file. Put this in context.</li>
+        <li><a href="/openapi.yaml"><code>/openapi.yaml</code></a> — request and response shapes.</li>
+      </ul>
+
+      <h2>A prompt that works</h2>
+      <pre class="code"><code>Using the Reserve docs below, add @cavos/reserve to this app.
+
+- Network: testnet (or mainnet).
+- Users pay reserves and fees in a token. They never hold XLM.
+- This is not OpenZeppelin Relayer. That product charges fees in tokens. This one also sponsors the reserves that let the account exist.
+- Use the SDK. Do not call /v1/build and sign the bytes yourself.
+- Token identity is CODE:ISSUER. Never an asset code alone.
+- Only classic G… accounts. Refuse C… contract ids.
+- No API key is required. A key only raises the rate limit.
+
+Base URL: https://reserve.cavos.xyz
+Testnet: https://reserve.cavos.xyz/testnet
+Mainnet: https://reserve.cavos.xyz/mainnet
+
+[paste https://reserve.cavos.xyz/llms-full.txt]</code></pre>
+
+      <h2 id="not-the-openzeppelin-relayer">Not the OpenZeppelin Relayer</h2>
+      <p>
+        Do not treat this as
+        <a href="https://docs.openzeppelin.com/relayer/stellar">OpenZeppelin Relayer</a>.
+        That product is a self-hosted submit pipeline. In sponsored mode it
+        charges <strong>network fees</strong> in a token. It accepts arbitrary
+        operations and Soroban. A source account is assumed.
+      </p>
+      <p>
+        Reserve sponsors <strong>reserves and fees</strong> so a classic
+        account can exist with a 0 XLM minimum. Hosted at the URLs above.
+        Four operations. No Soroban. No arbitrary XDR. Activate from a
+        claimable balance; never create the account empty.
+      </p>
+
+      <h2>Rules</h2>
+      <ul>
+        <li>This is not OpenZeppelin Relayer. Do not send <code>InvokeHostFunction</code>, <code>accountMerge</code>, or a raw transaction XDR to quote.</li>
+        <li>Install <code>@cavos/reserve</code> and <code>@stellar/stellar-sdk</code>. <code>new Reserve("testnet")</code> already pins <code>https://reserve.cavos.xyz/testnet</code>.</li>
+        <li>Prefer <code>pay</code>, <code>activate</code>, and <code>send</code>. They keep the request the caller made and refuse a quote or a built transaction that does not match it.</li>
+        <li>Calling HTTP yourself gives that check up. If you must, verify locally with <code>verifyTransaction</code> against the request you made, not against the sealed quote alone.</li>
+        <li>Prefix every HTTP path with <code>/testnet</code> or <code>/mainnet</code>. A single-lane self-host also answers <code>/v1</code> at the root.</li>
+        <li>Fee tokens come from <code>GET /{network}/v1/tokens</code>. This host accepts only <code>native</code> on testnet. Mainnet Circle USDC is <code>USDC:GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN</code>.</li>
+        <li>Allowed ops only: <code>create_account</code>, <code>payment</code>, <code>change_trust</code>, <code>claim_balance</code>. Never emit <code>SetOptions</code> or add a signer.</li>
+        <li>Never create an empty account. Activate with a claimable balance in the same transaction so reserves are recoverable.</li>
+        <li>A key is identity, not permission. Unkeyed: 30 req/min. Keyed: 600. Optional header: <code>Authorization: Bearer cav_…</code>.</li>
+        <li>Do not invent Soroban, other chains, dashboards, or stored accounts. Signing the challenge again returns the same key.</li>
+        <li>Concurrent bootstraps can return <code>503 bootstrap_busy</code>. Retry.</li>
+      </ul>
+
+      <h2>Sanity check</h2>
+      <pre class="code"><code>curl -s https://reserve.cavos.xyz/health
+curl -s https://reserve.cavos.xyz/testnet/v1/tokens
+curl -s https://reserve.cavos.xyz/mainnet/v1/tokens</code></pre>
+    </article>
+  </div>
+</div>

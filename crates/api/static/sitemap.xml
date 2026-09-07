@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://reserve.cavos.xyz/</loc></url>
+  <url><loc>https://reserve.cavos.xyz/docs</loc></url>
+  <url><loc>https://reserve.cavos.xyz/docs/quickstart</loc></url>
+  <url><loc>https://reserve.cavos.xyz/docs/api</loc></url>
+  <url><loc>https://reserve.cavos.xyz/docs/agents</loc></url>
+  <url><loc>https://reserve.cavos.xyz/llms.txt</loc></url>
+  <url><loc>https://reserve.cavos.xyz/llms-full.txt</loc></url>
+  <url><loc>https://reserve.cavos.xyz/openapi.yaml</loc></url>
+</urlset>

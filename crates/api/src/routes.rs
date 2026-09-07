@@ -166,35 +166,57 @@ fn site_router() -> Router {
             get(|| async { axum::response::Html(include_str!("../static/docs-api.html")) }),
         )
         .route(
+            "/docs/agents",
+            get(|| async { axum::response::Html(include_str!("../static/docs-agents.html")) }),
+        )
+        .route(
             "/llms.txt",
-            get(|| async {
-                (
-                    [
-                        (
-                            axum::http::header::CONTENT_TYPE,
-                            "text/plain; charset=utf-8",
-                        ),
-                        (axum::http::header::CACHE_CONTROL, "public, max-age=3600"),
-                    ],
-                    include_str!("../static/llms.txt"),
-                )
-            }),
+            get(|| async { text_file("text/plain; charset=utf-8", include_str!("../static/llms.txt")) }),
         )
         .route(
             "/llms-full.txt",
             get(|| async {
-                (
-                    [
-                        (
-                            axum::http::header::CONTENT_TYPE,
-                            "text/plain; charset=utf-8",
-                        ),
-                        (axum::http::header::CACHE_CONTROL, "public, max-age=3600"),
-                    ],
+                text_file(
+                    "text/plain; charset=utf-8",
                     include_str!("../static/llms-full.txt"),
                 )
             }),
         )
+        .route(
+            "/openapi.yaml",
+            get(|| async {
+                text_file(
+                    "application/yaml; charset=utf-8",
+                    include_str!("../static/openapi.yaml"),
+                )
+            }),
+        )
+        .route(
+            "/robots.txt",
+            get(|| async { text_file("text/plain; charset=utf-8", include_str!("../static/robots.txt")) }),
+        )
+        .route(
+            "/sitemap.xml",
+            get(|| async {
+                text_file(
+                    "application/xml; charset=utf-8",
+                    include_str!("../static/sitemap.xml"),
+                )
+            }),
+        )
+}
+
+fn text_file(
+    content_type: &'static str,
+    body: &'static str,
+) -> impl axum::response::IntoResponse {
+    (
+        [
+            (axum::http::header::CONTENT_TYPE, content_type),
+            (axum::http::header::CACHE_CONTROL, "public, max-age=3600"),
+        ],
+        body,
+    )
 }
 
 fn api_router(state: Arc<AppState>) -> Router {

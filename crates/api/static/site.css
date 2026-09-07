@@ -409,6 +409,7 @@ pre.code code { background: none; padding: 0; font-size: inherit; }
 .article h2 { margin: 2.5rem 0 0.75rem; font-size: 1.35rem; scroll-margin-top: calc(var(--nav) + 1rem); }
 .article p { margin: 0.85rem 0 0; color: var(--ink-soft); max-width: 48ch; }
 .article ul { margin: 0.85rem 0 0; padding-left: 1.1rem; color: var(--ink-soft); max-width: 48ch; }
+.article li code { word-break: break-all; }
 .article li + li { margin-top: 0.35rem; }
 .article pre.code { margin-top: 1.15rem; }
 .article .btn { margin-top: 1.5rem; }
@@ -416,6 +417,29 @@ pre.code code { background: none; padding: 0; font-size: inherit; }
   text-decoration: underline;
   text-underline-offset: 0.18em;
 }
+
+.base {
+  margin: 1.5rem 0 0;
+  padding: 1.1rem 0 0.15rem;
+  border-top: 1px solid var(--hairline);
+  max-width: 48ch;
+}
+.base dt {
+  margin: 0;
+  font-size: 0.6875rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+.base dd {
+  margin: 0.2rem 0 0.85rem;
+  font-family: "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 0.8125rem;
+  word-break: break-all;
+  color: var(--ink);
+}
+.base dd:last-child { margin-bottom: 0; }
+.base dd a { text-decoration: none; }
 
 .map { margin: 2rem 0 0; display: grid; gap: 0; }
 .map a {

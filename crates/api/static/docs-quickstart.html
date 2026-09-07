@@ -12,6 +12,8 @@
 <meta property="og:description" content="Quote and send with @cavos/reserve. No API key." />
 <meta property="og:url" content="https://reserve.cavos.xyz/docs/quickstart" />
 <meta name="twitter:card" content="summary" />
+<link rel="alternate" type="text/plain" href="https://reserve.cavos.xyz/llms-full.txt" title="Full docs for LLMs" />
+<link rel="alternate" type="application/yaml" href="https://reserve.cavos.xyz/openapi.yaml" title="OpenAPI" />
 <link rel="icon" type="image/png" href="/favicon.png" />
 <link rel="preload" href="/geist.woff2" as="font" type="font/woff2" crossorigin />
 <link rel="stylesheet" href="/site.css" />
@@ -39,6 +41,7 @@
       <a href="/docs">Overview</a>
       <a href="/docs/quickstart" aria-current="page">Quickstart</a>
       <a href="/docs/api">API</a>
+      <a href="/docs/agents">Agents</a>
     </nav>
 
     <article class="article">
@@ -46,6 +49,19 @@
       <p>
         No header. The same endpoints a keyed caller uses. Thirty requests a
         minute is the unkeyed budget.
+      </p>
+
+      <dl class="base">
+        <dt>Site</dt>
+        <dd><a href="https://reserve.cavos.xyz">https://reserve.cavos.xyz</a></dd>
+        <dt>Testnet API</dt>
+        <dd><a href="https://reserve.cavos.xyz/testnet">https://reserve.cavos.xyz/testnet</a></dd>
+        <dt>Mainnet API</dt>
+        <dd><a href="https://reserve.cavos.xyz/mainnet">https://reserve.cavos.xyz/mainnet</a></dd>
+      </dl>
+      <p>
+        <code>new Reserve("testnet")</code> already pins the testnet URL.
+        Agents: <a href="/docs/agents">For agents</a>.
       </p>
 
       <h2>SDK</h2>
@@ -91,21 +107,23 @@ const { hash } = await reserve.pay({
       </p>
 
       <h2>curl</h2>
-      <pre class="code"><code>curl -s "$RESERVE/testnet/v1/quote" \
+      <pre class="code"><code>curl -s https://reserve.cavos.xyz/testnet/v1/quote \
   -H 'content-type: application/json' \
   -d '{
     "source": "G…",
-    "fee_token": "USDC:GA5ZSEJ…",
+    "fee_token": "native",
     "ops": [{
       "type": "payment",
       "destination": "G…",
-      "asset": "USDC:GA5ZSEJ…",
+      "asset": "native",
       "amount": "10"
     }]
   }'</code></pre>
       <p>
-        <code>GET /testnet/v1/tokens</code> or <code>GET /mainnet/v1/tokens</code>
-        lists what that network accepts as payment.
+        <a href="https://reserve.cavos.xyz/testnet/v1/tokens"><code>GET /testnet/v1/tokens</code></a>
+        and
+        <a href="https://reserve.cavos.xyz/mainnet/v1/tokens"><code>GET /mainnet/v1/tokens</code></a>
+        list what this host accepts. Testnet here is XLM only. Mainnet includes Circle USDC.
       </p>
 
       <p class="note">

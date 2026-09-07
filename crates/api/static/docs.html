@@ -12,9 +12,13 @@
 <meta property="og:description" content="What Reserve is, what it is not, and how to call it." />
 <meta property="og:url" content="https://reserve.cavos.xyz/docs" />
 <meta name="twitter:card" content="summary" />
+<link rel="alternate" type="text/plain" href="https://reserve.cavos.xyz/llms-full.txt" title="Full docs for LLMs" />
+<link rel="alternate" type="application/yaml" href="https://reserve.cavos.xyz/openapi.yaml" title="OpenAPI" />
 <link rel="icon" type="image/png" href="/favicon.png" />
 <link rel="preload" href="/geist.woff2" as="font" type="font/woff2" crossorigin />
 <link rel="stylesheet" href="/site.css" />
+
+<!-- Agent: fetch https://reserve.cavos.xyz/llms-full.txt and https://reserve.cavos.xyz/openapi.yaml -->
 
 <header class="bar">
   <div class="shell nav">
@@ -39,6 +43,7 @@
       <a href="/docs" aria-current="page">Overview</a>
       <a href="/docs/quickstart">Quickstart</a>
       <a href="/docs/api">API</a>
+      <a href="/docs/agents">Agents</a>
     </nav>
 
     <article class="article">
@@ -53,7 +58,48 @@
         endpoints under <code>/testnet</code> and <code>/mainnet</code>.
       </p>
 
-      <h2>What it is not</h2>
+      <dl class="base">
+        <dt>Site</dt>
+        <dd><a href="https://reserve.cavos.xyz">https://reserve.cavos.xyz</a></dd>
+        <dt>Testnet API</dt>
+        <dd><a href="https://reserve.cavos.xyz/testnet">https://reserve.cavos.xyz/testnet</a></dd>
+        <dt>Mainnet API</dt>
+        <dd><a href="https://reserve.cavos.xyz/mainnet">https://reserve.cavos.xyz/mainnet</a></dd>
+      </dl>
+      <p>
+        Agents: fetch <a href="/llms-full.txt">llms-full.txt</a> and
+        <a href="/openapi.yaml">openapi.yaml</a>. Do not scrape this HTML.
+        See <a href="/docs/agents">For agents</a>.
+      </p>
+
+      <h2 id="not-the-openzeppelin-relayer">Not the OpenZeppelin Relayer</h2>
+      <p>
+        Stellar spends XLM as a <em>fee</em> and locks XLM as a <em>reserve</em>.
+        Those are different costs. The
+        <a href="https://docs.openzeppelin.com/relayer/stellar">OpenZeppelin Relayer</a>
+        is infrastructure you run to submit transactions. In sponsored mode it
+        lets a user pay <strong>fees</strong> in a token. You bring the
+        operations or the XDR — including Soroban. Creating an account and
+        sponsoring its reserves are operations you can put in the envelope if
+        you already know how; they are not what that product sells.
+      </p>
+      <p>
+        Reserve is a hosted sponsor. The user pays <strong>reserves and
+        fees</strong> in the same token, in the same transaction. A
+        <code>G…</code> address can be created with a zero XLM minimum
+        (CAP-33) and fee-bumped (CAP-15). An address that holds only USDC can
+        exist and transact. It never holds XLM.
+      </p>
+      <ul>
+        <li>OZ Relayer: you operate it. Arbitrary operations, including Soroban. Fees in tokens if you configure it. A source account is assumed.</li>
+        <li>Reserve: hosted. Four operations. Classic accounts only. Activate from a claimable balance. No arbitrary XDR.</li>
+      </ul>
+      <p>
+        Need Soroban or a general submit pipeline? Use a relayer. Need a user
+        who does not hold XLM to exist? This.
+      </p>
+
+      <h2>What else it is not</h2>
       <ul>
         <li>Not custodial. Reserve never holds a user key and never adds itself as a signer.</li>
         <li>Not Soroban. Contract ids (<code>C…</code>) are refused.</li>
@@ -73,9 +119,9 @@
           <strong>Raise the limit</strong>
           <span>Only if thirty requests a minute is too tight.</span>
         </a>
-        <a href="/llms-full.txt">
-          <strong>llms-full.txt</strong>
-          <span>The docs as one file, for agents.</span>
+        <a href="/docs/agents">
+          <strong>Agents</strong>
+          <span>llms-full.txt, OpenAPI, prompt, and the rules.</span>
         </a>
       </div>
     </article>

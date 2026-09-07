@@ -12,6 +12,8 @@
 <meta property="og:description" content="quote, build, submit, tokens, status. A key is optional." />
 <meta property="og:url" content="https://reserve.cavos.xyz/docs/api" />
 <meta name="twitter:card" content="summary" />
+<link rel="alternate" type="text/plain" href="https://reserve.cavos.xyz/llms-full.txt" title="Full docs for LLMs" />
+<link rel="alternate" type="application/yaml" href="https://reserve.cavos.xyz/openapi.yaml" title="OpenAPI" />
 <link rel="icon" type="image/png" href="/favicon.png" />
 <link rel="preload" href="/geist.woff2" as="font" type="font/woff2" crossorigin />
 <link rel="stylesheet" href="/site.css" />
@@ -39,6 +41,7 @@
       <a href="/docs">Overview</a>
       <a href="/docs/quickstart">Quickstart</a>
       <a href="/docs/api" aria-current="page">API</a>
+      <a href="/docs/agents">Agents</a>
     </nav>
 
     <article class="article">
@@ -48,7 +51,19 @@
         the inner transaction from the quote and compares XDR byte for byte.
         That comparison is the security gate. Prefix every path with
         <code>/testnet</code> or <code>/mainnet</code>.
-        Agents: <a href="/llms-full.txt">llms-full.txt</a>.
+      </p>
+
+      <dl class="base">
+        <dt>Site</dt>
+        <dd><a href="https://reserve.cavos.xyz">https://reserve.cavos.xyz</a></dd>
+        <dt>Testnet API</dt>
+        <dd><a href="https://reserve.cavos.xyz/testnet">https://reserve.cavos.xyz/testnet</a></dd>
+        <dt>Mainnet API</dt>
+        <dd><a href="https://reserve.cavos.xyz/mainnet">https://reserve.cavos.xyz/mainnet</a></dd>
+      </dl>
+      <p>
+        OpenAPI: <a href="/openapi.yaml">/openapi.yaml</a>.
+        Agents: <a href="/docs/agents">For agents</a>.
       </p>
 
       <h2>POST /{network}/v1/quote</h2>

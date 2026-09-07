@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Allow: /llms.txt
+Allow: /llms-full.txt
+Allow: /openapi.yaml
+Allow: /docs
+Allow: /docs/agents
+
+Sitemap: https://reserve.cavos.xyz/sitemap.xml

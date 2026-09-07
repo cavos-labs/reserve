@@ -2,17 +2,52 @@
 
 A Stellar sponsor so a user can exist and transact by paying reserves and fees in a held token. Classic G… accounts only. Not custodial. Not Soroban. No signup.
 
-Hosted site: https://reserve.cavos.xyz
+## Base URL
+
+Site: https://reserve.cavos.xyz
 Testnet: https://reserve.cavos.xyz/testnet
 Mainnet: https://reserve.cavos.xyz/mainnet
+
+`new Reserve("testnet")` pins https://reserve.cavos.xyz/testnet and the testnet passphrase.
+`new Reserve("mainnet")` pins https://reserve.cavos.xyz/mainnet and the public passphrase.
+Self-host: `new Reserve({ url: "http://127.0.0.1:8080/testnet", network: "testnet" })`.
+`await Reserve.connect("testnet")` also pins the sponsor from GET /health.
 
 A key is a bigger rate-limit bucket, not a permission. Unkeyed callers get 30 requests a minute. A key raises that to 600. Paste the URL and it works.
 
 ## What it is not
 
+- Not the OpenZeppelin Relayer. OZ Relayer is self-hosted submit infrastructure. In sponsored mode it lets a user pay *network fees* in a token. You bring operations or XDR, including Soroban. A source account is assumed. Reserve is a hosted sponsor: the user pays *reserves and fees* in the same token so a classic G… account can exist with a 0 XLM minimum (CAP-33 + CAP-15). Four operations. No arbitrary XDR. No Soroban.
 - Not custodial. Reserve never holds a user key and never adds itself as a signer.
 - Not Soroban. Contract ids (C…) are refused.
 - Not a dashboard. Signing a challenge again returns the same key. Nothing is stored.
+- Not multi-chain. Stellar classic accounts only.
+
+## For agents
+
+Fetch these instead of scraping HTML:
+
+```
+curl -s https://reserve.cavos.xyz/llms.txt
+curl -s https://reserve.cavos.xyz/llms-full.txt
+curl -s https://reserve.cavos.xyz/openapi.yaml
+curl -s https://reserve.cavos.xyz/health
+curl -s https://reserve.cavos.xyz/testnet/v1/tokens
+```
+
+Use the SDK when writing application code. Do not call /v1/build yourself and sign the bytes. The SDK keeps the request the caller made and refuses a quote or a built transaction that does not match it.
+
+Token identity is CODE:ISSUER, or `native` for XLM. Never an asset code alone.
+Ask GET /{network}/v1/tokens. This host accepts only native on testnet.
+Mainnet Circle USDC:
+
+USDC:GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN
+
+Allowed ops: create_account, payment, change_trust, claim_balance. Never emit SetOptions.
+
+This is not OpenZeppelin Relayer. Do not submit arbitrary XDR or InvokeHostFunction. OZ Relayer charges fees in tokens for a source account you already have. Reserve sponsors reserves and fees so the account can exist without XLM.
+
+Never create an empty account. Activate with a claimable balance in the same transaction.
 
 ## SDK
 
@@ -25,23 +60,21 @@ import { Reserve } from "@cavos/reserve";
 
 const reserve = new Reserve("testnet");
 // Mainnet: new Reserve("mainnet")
-// Self-host: new Reserve({ url: "http://127.0.0.1:8080/testnet", network: "testnet" })
-// Pin the sponsor from /health: await Reserve.connect("testnet")
 
 const { hash } = await reserve.pay({
   source,
   destination,
   amount: "10",
-  token: "USDC:GA5ZSEJ…",
+  token: "USDC:GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN",
   maxSend: "0.05",
-}, (xdr, { networkPassphrase }) => wallet.signTransaction(xdr, { networkPassphrase }));
+}, (xdr, { networkPassphrase }) =>
+  wallet.signTransaction(xdr, { networkPassphrase }),
+);
 ```
 
 `maxSend` is a decimal in the fee token. `maxSendStroops` is the same ceiling in stroops. One of them is required: the fee payment is not in `ops`, so without a ceiling a quote for any amount verifies cleanly.
 
-Do not call /v1/build yourself and sign the bytes. `pay`, `activate`, and `send` verify locally against the request you made.
-
-`new Reserve("testnet")` pins https://reserve.cavos.xyz/testnet and the testnet passphrase. `Reserve.connect("testnet")` also pins the sponsor from GET /health, so a quote that pays anyone else is refused.
+`pay`, `activate`, and `send` verify locally against the request you made.
 
 ### Activate an account with a token
 
@@ -50,7 +83,7 @@ Someone with no account cannot hold XLM and cannot source a transaction. Pay the
 ```ts
 await reserve.activate({
   address: newAddress,
-  token: "USDC:GA5ZSEJ…",
+  token: "USDC:GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN",
   balanceId,
   maxSend: "5",
 }, sign);
@@ -61,11 +94,11 @@ Equivalent explicit ops:
 ```ts
 await reserve.send({
   source: newAddress,
-  feeToken: "USDC:GA5ZSEJ…",
+  feeToken: "USDC:GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN",
   maxSend: "5",
   ops: [
     { type: "create_account", destination: newAddress },
-    { type: "change_trust", asset: "USDC:GA5ZSEJ…" },
+    { type: "change_trust", asset: "USDC:GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN" },
     { type: "claim_balance", balance_id: balanceId },
   ],
 }, sign);
@@ -77,34 +110,81 @@ await reserve.send({
 
 ```ts
 const quote = await reserve.quote({ source, ops, feeToken, maxSend });
-// show quote.chargeStroops / quote.sendMaxStroops
 const { hash } = await reserve.send(quote, sign);
 ```
 
-Allowed ops: create_account, payment, change_trust, claim_balance.
-
 Show issuer domain, never the asset code alone. GET /{network}/v1/tokens or reserve.tokens().
+
+If you call HTTP yourself, verify with:
+
+```ts
+import { verifyTransaction, readQuote } from "@cavos/reserve";
+
+verifyTransaction(xdr, readQuote(quoteToken), {
+  source,
+  feeToken: "USDC:GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN",
+  maxSendStroops: 500_000,
+  ops,
+});
+```
 
 ## HTTP
 
 Prefix every path with /testnet or /mainnet.
 
-POST /{network}/v1/quote     { source, fee_token, ops[] } → sealed quote + price
-POST /{network}/v1/build     { quote } → unsigned inner XDR
-POST /{network}/v1/submit    { quote, signed_xdr } → hash
-GET  /{network}/v1/tokens
-GET  /{network}/v1/status/{hash}
-GET  /{network}/health
-GET  /health                 (catalog when both networks are up)
+GET  https://reserve.cavos.xyz/health
+GET  https://reserve.cavos.xyz/{network}/health
+GET  https://reserve.cavos.xyz/{network}/v1/tokens
+POST https://reserve.cavos.xyz/{network}/v1/quote     { source, fee_token, ops[] }
+POST https://reserve.cavos.xyz/{network}/v1/build     { quote }
+POST https://reserve.cavos.xyz/{network}/v1/submit    { quote, signed_xdr }
+GET  https://reserve.cavos.xyz/{network}/v1/status/{hash}
 
 Optional keys (identity, not authorisation):
 
-POST /{network}/v1/challenge  { address } → sequence-0 transaction to sign
-POST /{network}/v1/keys       { signed_xdr } → cav_…
+POST https://reserve.cavos.xyz/{network}/v1/challenge  { address }
+POST https://reserve.cavos.xyz/{network}/v1/keys       { signed_xdr }
 
 Send Authorization: Bearer <key> on the same calls. Signing the challenge again returns the same key.
 
 A single-lane self-host also answers /v1 at the root.
+
+Example:
+
+```
+curl -s https://reserve.cavos.xyz/testnet/v1/quote \
+  -H 'content-type: application/json' \
+  -d '{
+    "source": "G…",
+    "fee_token": "native",
+    "ops": [{
+      "type": "payment",
+      "destination": "G…",
+      "asset": "native",
+      "amount": "10"
+    }]
+  }'
+```
+
+Quote response: { quote, mode, charge_stroops, send_max_stroops, reserve_stroops, slippage_bps, creates_account, expires_at_ledger }.
+mode is sponsored (account exists) or bootstrap (account does not).
+
+## Errors
+
+JSON { error, message }. Retry-After when rate_limited or bootstrap_busy.
+
+- rate_limited (429)
+- bootstrap_busy (503)
+- token_not_allowed (400)
+- no_path (422)
+- unclaimable (422)
+- quote_expired (409)
+- quote_signature (401)
+- quote_mismatch (400)
+- path_moved (409)
+- issuing_disabled (503)
+- horizon (502)
+- invalid_request / invalid_address / invalid_challenge (400)
 
 ## Invariants
 
@@ -114,3 +194,5 @@ A single-lane self-host also answers /v1 at the root.
 - Quotes travel as an HMAC-signed payload. Nothing is stored.
 - Bootstrap (new account) consumes a sponsor sequence unless extra channel accounts are configured. A second concurrent bootstrap is 503 bootstrap_busy.
 - The remaining risk is blind-signing a server-built XDR. That is why the SDK rebuilds and compares before you sign.
+- Pricing: 20% over (network fee + reserve), with a floor of 56000 stroops (~0.001 USDC) on existing-account txs.
+- Not a general relayer. Four operations. Classic accounts. Reserves and fees.

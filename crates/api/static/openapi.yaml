@@ -1,0 +1,388 @@
+openapi: 3.1.0
+info:
+  title: Reserve
+  version: "1"
+  summary: Stellar sponsor. Users pay reserves and fees in a held token.
+  description: |
+    Classic G… accounts only. No API key required. A key is a bigger
+    rate-limit bucket, not a permission.
+
+    Hosted site: https://reserve.cavos.xyz
+    Testnet: https://reserve.cavos.xyz/testnet
+    Mainnet: https://reserve.cavos.xyz/mainnet
+
+    Prefer the SDK `@cavos/reserve`. Calling these endpoints directly
+    skips the local check that the built transaction matches the request
+    the caller made.
+  contact:
+    url: https://reserve.cavos.xyz/docs
+servers:
+  - url: https://reserve.cavos.xyz/testnet
+    description: Testnet
+  - url: https://reserve.cavos.xyz/mainnet
+    description: Mainnet
+  - url: https://reserve.cavos.xyz
+    description: Catalog (GET /health only when both networks are up)
+tags:
+  - name: pay
+  - name: keys
+  - name: meta
+paths:
+  /health:
+    get:
+      tags: [meta]
+      summary: Sponsor address, spendable XLM, rate limits
+      operationId: health
+      responses:
+        "200":
+          description: Lane or catalog
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Health"
+  /v1/tokens:
+    get:
+      tags: [meta]
+      summary: Assets accepted as fee payment
+      operationId: tokens
+      responses:
+        "200":
+          description: Allowlist
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Tokens"
+  /v1/quote:
+    post:
+      tags: [pay]
+      summary: Price and seal a quote
+      operationId: quote
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QuoteRequest"
+      responses:
+        "200":
+          description: Sealed quote
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QuoteResponse"
+        "422":
+          description: no_path or unclaimable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "503":
+          description: bootstrap_busy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /v1/build:
+    post:
+      tags: [pay]
+      summary: Unsigned inner transaction XDR
+      description: Verify locally against the request you made before anyone signs.
+      operationId: build
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BuildRequest"
+      responses:
+        "200":
+          description: XDR
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BuildResponse"
+  /v1/submit:
+    post:
+      tags: [pay]
+      summary: Fee-bump and submit
+      operationId: submit
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SubmitRequest"
+      responses:
+        "200":
+          description: Hash
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SubmitResponse"
+        "400":
+          description: quote_mismatch
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /v1/status/{hash}:
+    get:
+      tags: [pay]
+      summary: Horizon view of a submitted transaction
+      operationId: status
+      parameters:
+        - in: path
+          name: hash
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TxStatus"
+  /v1/challenge:
+    post:
+      tags: [keys]
+      summary: Sequence-0 transaction to prove an address
+      operationId: challenge
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [address]
+              properties:
+                address:
+                  type: string
+                  description: Classic G… account
+      responses:
+        "200":
+          description: Unsigned challenge
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChallengeResponse"
+  /v1/keys:
+    post:
+      tags: [keys]
+      summary: Mint cav_… from a signed challenge
+      operationId: issueKey
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [signed_xdr]
+              properties:
+                signed_xdr:
+                  type: string
+      responses:
+        "200":
+          description: Key
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IssuedKey"
+        "503":
+          description: issuing_disabled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+components:
+  securitySchemes:
+    bearer:
+      type: http
+      scheme: bearer
+      description: Optional. Identity only. Unkeyed callers are served.
+  schemas:
+    Error:
+      type: object
+      required: [error, message]
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+    Health:
+      type: object
+      properties:
+        status:
+          type: string
+        sponsor:
+          type: string
+        network:
+          type: string
+        anon_per_minute:
+          type: integer
+        keyed_per_minute:
+          type: integer
+        funds:
+          type: object
+          properties:
+            balance_stroops:
+              type: integer
+            locked_stroops:
+              type: integer
+            spendable_stroops:
+              type: integer
+            sponsoring:
+              type: integer
+        networks:
+          type: object
+          additionalProperties:
+            $ref: "#/components/schemas/Health"
+    Tokens:
+      type: object
+      properties:
+        tokens:
+          type: array
+          items:
+            type: string
+          description: CODE:ISSUER, or native
+        known:
+          type: array
+          items:
+            type: object
+            properties:
+              asset:
+                type: string
+              code:
+                type: string
+              issuer:
+                type: string
+              domain:
+                type: string
+              slippage_bps:
+                type: integer
+              note:
+                type: string
+    UserOp:
+      oneOf:
+        - type: object
+          required: [type, destination]
+          properties:
+            type:
+              const: create_account
+            destination:
+              type: string
+        - type: object
+          required: [type, destination, asset, amount]
+          properties:
+            type:
+              const: payment
+            destination:
+              type: string
+            asset:
+              type: string
+            amount:
+              type: string
+        - type: object
+          required: [type, asset]
+          properties:
+            type:
+              const: change_trust
+            asset:
+              type: string
+            limit:
+              type: string
+        - type: object
+          required: [type, balance_id]
+          properties:
+            type:
+              const: claim_balance
+            balance_id:
+              type: string
+    QuoteRequest:
+      type: object
+      required: [source, ops]
+      properties:
+        source:
+          type: string
+        fee_token:
+          type: string
+          description: CODE:ISSUER. Defaults to native.
+          examples:
+            - USDC:GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN
+        ops:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserOp"
+    QuoteResponse:
+      type: object
+      properties:
+        quote:
+          type: string
+          description: HMAC-sealed payload. Pass this to build and submit.
+        mode:
+          type: string
+          enum: [sponsored, bootstrap]
+        charge_stroops:
+          type: integer
+        send_max_stroops:
+          type: integer
+        reserve_stroops:
+          type: integer
+        slippage_bps:
+          type: integer
+        creates_account:
+          type: boolean
+        expires_at_ledger:
+          type: integer
+    BuildRequest:
+      type: object
+      required: [quote]
+      properties:
+        quote:
+          type: string
+    BuildResponse:
+      type: object
+      properties:
+        xdr:
+          type: string
+        network_passphrase:
+          type: string
+    SubmitRequest:
+      type: object
+      required: [quote, signed_xdr]
+      properties:
+        quote:
+          type: string
+        signed_xdr:
+          type: string
+    SubmitResponse:
+      type: object
+      properties:
+        hash:
+          type: string
+    TxStatus:
+      type: object
+      additionalProperties: true
+    ChallengeResponse:
+      type: object
+      properties:
+        xdr:
+          type: string
+        network_passphrase:
+          type: string
+        expires_in:
+          type: integer
+    IssuedKey:
+      type: object
+      properties:
+        key:
+          type: string
+        id:
+          type: string
+        expires_at:
+          type: integer
+        requests_per_minute:
+          type: integer
+security:
+  - {}
+  - bearer: []

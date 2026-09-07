@@ -1,17 +1,24 @@
 # Reserve
 
-> A Stellar sponsor so a user can exist and transact by paying reserves and fees in a held token. Classic G… accounts only. No API key required.
+> A Stellar sponsor so a user can exist and transact by paying reserves and fees in a held token. Classic G… accounts only. No API key required. Not the OpenZeppelin Relayer: that product charges fees in tokens; this one also sponsors the reserves that let the account exist without XLM.
 
-The hosted service is https://reserve.cavos.xyz
+Base URL: https://reserve.cavos.xyz
 Testnet API: https://reserve.cavos.xyz/testnet
 Mainnet API: https://reserve.cavos.xyz/mainnet
 
+If you are an agent, fetch https://reserve.cavos.xyz/llms-full.txt and https://reserve.cavos.xyz/openapi.yaml. Do not scrape the HTML.
+
 ## Docs
 
-- [Overview](https://reserve.cavos.xyz/docs): what Reserve is and is not
+- [Overview](https://reserve.cavos.xyz/docs): what Reserve is and is not. Base URL. Not the OpenZeppelin Relayer.
 - [Quickstart](https://reserve.cavos.xyz/docs/quickstart): install, pay, activate an account with a token
 - [API](https://reserve.cavos.xyz/docs/api): quote, build, submit, tokens, optional keys
+- [For agents](https://reserve.cavos.xyz/docs/agents): fetch list, prompt, invariants
 
-## For agents
+## Machine-readable
 
-- [llms-full.txt](https://reserve.cavos.xyz/llms-full.txt): this site as one plain-text file
+- [llms-full.txt](https://reserve.cavos.xyz/llms-full.txt): this product as one plain-text file
+- [openapi.yaml](https://reserve.cavos.xyz/openapi.yaml): request and response shapes
+- [GET /health](https://reserve.cavos.xyz/health): both networks, sponsor, spendable XLM
+- [GET /testnet/v1/tokens](https://reserve.cavos.xyz/testnet/v1/tokens)
+- [GET /mainnet/v1/tokens](https://reserve.cavos.xyz/mainnet/v1/tokens)
