@@ -1,0 +1,5 @@
+target
+sdk/ts/node_modules
+sdk/ts/dist
+.env
+*.db

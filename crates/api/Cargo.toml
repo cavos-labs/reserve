@@ -1,0 +1,27 @@
+[package]
+name = "reserve-api"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+reserve-core.workspace = true
+reserve-horizon.workspace = true
+reserve-signer.workspace = true
+axum = "0.8"
+tokio.workspace = true
+tower-http = { version = "0.6", features = ["trace", "cors"] }
+serde.workspace = true
+serde_json.workspace = true
+anyhow.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+governor = "0.10"
+ed25519-dalek = { workspace = true }
+base64.workspace = true
+hex.workspace = true
+hmac.workspace = true
+sha2.workspace = true
+stellar-strkey.workspace = true
+thiserror.workspace = true
+stellar-xdr.workspace = true

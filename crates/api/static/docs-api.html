@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>API - Reserve</title>
+<meta name="description" content="quote, build, submit, tokens, status. A key is optional and only raises the rate limit." />
+<meta name="theme-color" content="#402aff" />
+<link rel="canonical" href="https://reserve.cavos.xyz/docs/api" />
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="Reserve" />
+<meta property="og:title" content="API - Reserve" />
+<meta property="og:description" content="quote, build, submit, tokens, status. A key is optional." />
+<meta property="og:url" content="https://reserve.cavos.xyz/docs/api" />
+<meta name="twitter:card" content="summary" />
+<link rel="icon" type="image/png" href="/favicon.png" />
+<link rel="preload" href="/geist.woff2" as="font" type="font/woff2" crossorigin />
+<link rel="stylesheet" href="/site.css" />
+
+<header class="bar">
+  <div class="shell nav">
+    <a class="mark" href="/" aria-label="Reserve">
+      <svg width="20" height="25" viewBox="0 0 66 82" fill="currentColor" role="img" aria-hidden="true">
+        <g transform="translate(0,82) scale(0.1,-0.1)">
+          <path d="M148 630 l-148 -185 68 -3 c193 -9 236 39 230 264 l-3 108 -147 -184z M360 705 c1 -225 37 -269 217 -263 l83 3 -136 170 c-74 94 -142 177 -150 185 -12 12 -14 0 -14 -95z M125 223 c69 -87 136 -171 150 -188 l26 -30 -4 135 c-6 212 -29 240 -201 240 l-96 0 125 -157z M433 364 c-53 -26 -67 -70 -71 -224 -3 -118 -2 -133 11 -120 8 8 76 93 151 188 l136 172 -97 0 c-68 0 -108 -5 -130 -16z" />
+        </g>
+      </svg>
+    </a>
+    <nav>
+      <a href="/docs">Docs</a>
+      <a href="/#key">Raise the limit</a>
+    </nav>
+  </div>
+</header>
+
+<div class="shell">
+
+  <div class="docs">
+    <nav class="docs-nav" aria-label="Docs">
+      <a href="/docs">Overview</a>
+      <a href="/docs/quickstart">Quickstart</a>
+      <a href="/docs/api" aria-current="page">API</a>
+    </nav>
+
+    <article class="article">
+      <h1>API</h1>
+      <p>
+        Quotes travel as an HMAC-signed payload. At submit the service rebuilds
+        the inner transaction from the quote and compares XDR byte for byte.
+        That comparison is the security gate. Prefix every path with
+        <code>/testnet</code> or <code>/mainnet</code>.
+        Agents: <a href="/llms-full.txt">llms-full.txt</a>.
+      </p>
+
+      <h2>POST /{network}/v1/quote</h2>
+      <p>
+        <code>{ source, fee_token, ops[] }</code>.
+        Operations: <code>create_account</code>, <code>payment</code>,
+        <code>change_trust</code>, <code>claim_balance</code>.
+        Returns a sealed quote and the price in stroops.
+        To activate an address that holds nothing, pay it a claimable balance
+        and send those three operations together. See
+        <a href="/docs/quickstart#activate">Activate an account with a token</a>.
+      </p>
+
+      <h2>POST /{network}/v1/build</h2>
+      <p>
+        <code>{ quote }</code> → unsigned inner transaction XDR.
+        Verify it locally against the request you made before anyone signs.
+      </p>
+
+      <h2>POST /{network}/v1/submit</h2>
+      <p>
+        <code>{ quote, signed_xdr }</code> → hash.
+        The service fee-bumps and submits. A mismatch is refused.
+      </p>
+
+      <h2>GET /{network}/v1/tokens</h2>
+      <p>Assets this deployment accepts, with issuer and home domain.</p>
+
+      <h2>GET /{network}/v1/status/{hash}</h2>
+      <p>Horizon’s view of a submitted transaction.</p>
+
+      <h2>Optional: keys</h2>
+      <p>
+        A key is identity, never authorisation. Unkeyed callers are served
+        from a smaller budget. Same endpoints either way.
+      </p>
+      <pre class="code"><code>POST /{network}/v1/challenge  { address }     → a transaction to sign
+POST /{network}/v1/keys       { signed_xdr }  → cav_…</code></pre>
+      <p>
+        The challenge is sequence number zero, so the network can never accept
+        it. Signing again returns the same key.
+        <a href="/#key">Raise the limit</a> from the product page.
+      </p>
+    </article>
+  </div>
+</div>

@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Docs - Reserve</title>
+<meta name="description" content="What Reserve is, what it is not, and how to call it. Classic Stellar accounts. No key required." />
+<meta name="theme-color" content="#402aff" />
+<link rel="canonical" href="https://reserve.cavos.xyz/docs" />
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="Reserve" />
+<meta property="og:title" content="Docs - Reserve" />
+<meta property="og:description" content="What Reserve is, what it is not, and how to call it." />
+<meta property="og:url" content="https://reserve.cavos.xyz/docs" />
+<meta name="twitter:card" content="summary" />
+<link rel="icon" type="image/png" href="/favicon.png" />
+<link rel="preload" href="/geist.woff2" as="font" type="font/woff2" crossorigin />
+<link rel="stylesheet" href="/site.css" />
+
+<header class="bar">
+  <div class="shell nav">
+    <a class="mark" href="/" aria-label="Reserve">
+      <svg width="20" height="25" viewBox="0 0 66 82" fill="currentColor" role="img" aria-hidden="true">
+        <g transform="translate(0,82) scale(0.1,-0.1)">
+          <path d="M148 630 l-148 -185 68 -3 c193 -9 236 39 230 264 l-3 108 -147 -184z M360 705 c1 -225 37 -269 217 -263 l83 3 -136 170 c-74 94 -142 177 -150 185 -12 12 -14 0 -14 -95z M125 223 c69 -87 136 -171 150 -188 l26 -30 -4 135 c-6 212 -29 240 -201 240 l-96 0 125 -157z M433 364 c-53 -26 -67 -70 -71 -224 -3 -118 -2 -133 11 -120 8 8 76 93 151 188 l136 172 -97 0 c-68 0 -108 -5 -130 -16z" />
+        </g>
+      </svg>
+    </a>
+    <nav>
+      <a href="/docs" aria-current="page">Docs</a>
+      <a href="/#key">Raise the limit</a>
+    </nav>
+  </div>
+</header>
+
+<div class="shell">
+
+  <div class="docs">
+    <nav class="docs-nav" aria-label="Docs">
+      <a href="/docs" aria-current="page">Overview</a>
+      <a href="/docs/quickstart">Quickstart</a>
+      <a href="/docs/api">API</a>
+    </nav>
+
+    <article class="article">
+      <h1>Reserve</h1>
+      <p>
+        A Stellar sponsor so a user can exist and transact by paying reserves
+        and fees in a held token. Classic <code>G…</code> accounts only.
+      </p>
+      <p>
+        There is no signup. Call the API without a header. A key is a bigger
+        rate-limit bucket, not a permission. Testnet and mainnet are the same
+        endpoints under <code>/testnet</code> and <code>/mainnet</code>.
+      </p>
+
+      <h2>What it is not</h2>
+      <ul>
+        <li>Not custodial. Reserve never holds a user key and never adds itself as a signer.</li>
+        <li>Not Soroban. Contract ids (<code>C…</code>) are refused.</li>
+        <li>Not a dashboard. Signing a challenge again returns the same key. Nothing is stored.</li>
+      </ul>
+
+      <div class="map">
+        <a href="/docs/quickstart">
+          <strong>Quickstart</strong>
+          <span>Quote and submit with no header. Activate an account with a token.</span>
+        </a>
+        <a href="/docs/api">
+          <strong>API</strong>
+          <span>quote, build, submit. Keys at the end, marked optional.</span>
+        </a>
+        <a href="/#key">
+          <strong>Raise the limit</strong>
+          <span>Only if thirty requests a minute is too tight.</span>
+        </a>
+        <a href="/llms-full.txt">
+          <strong>llms-full.txt</strong>
+          <span>The docs as one file, for agents.</span>
+        </a>
+      </div>
+    </article>
+  </div>
+</div>

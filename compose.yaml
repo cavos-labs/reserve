@@ -1,0 +1,15 @@
+services:
+  reserve:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      RESERVE_NETWORK: ${RESERVE_NETWORK:-testnet}
+      # Never bake these into the image.
+      RESERVE_SPONSOR_SECRET: ${RESERVE_SPONSOR_SECRET:?set a sponsor secret}
+      RESERVE_QUOTE_KEY: ${RESERVE_QUOTE_KEY:?set a 32+ byte quote key}
+      RESERVE_CHANNEL_SECRETS: ${RESERVE_CHANNEL_SECRETS:-}
+      RESERVE_TOKENS: ${RESERVE_TOKENS:-}
+      RESERVE_MARGIN_BPS: ${RESERVE_MARGIN_BPS:-2000}
+      RUST_LOG: ${RUST_LOG:-info}

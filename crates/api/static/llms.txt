@@ -1,0 +1,17 @@
+# Reserve
+
+> A Stellar sponsor so a user can exist and transact by paying reserves and fees in a held token. Classic G… accounts only. No API key required.
+
+The hosted service is https://reserve.cavos.xyz
+Testnet API: https://reserve.cavos.xyz/testnet
+Mainnet API: https://reserve.cavos.xyz/mainnet
+
+## Docs
+
+- [Overview](https://reserve.cavos.xyz/docs): what Reserve is and is not
+- [Quickstart](https://reserve.cavos.xyz/docs/quickstart): install, pay, activate an account with a token
+- [API](https://reserve.cavos.xyz/docs/api): quote, build, submit, tokens, optional keys
+
+## For agents
+
+- [llms-full.txt](https://reserve.cavos.xyz/llms-full.txt): this site as one plain-text file

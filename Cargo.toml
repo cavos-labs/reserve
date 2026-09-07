@@ -1,0 +1,31 @@
+[workspace]
+resolver = "2"
+members = ["crates/horizon", "crates/signer", "crates/core", "crates/api", "crates/e2e"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "Apache-2.0"
+
+[workspace.dependencies]
+reserve-horizon = { path = "crates/horizon" }
+reserve-signer = { path = "crates/signer" }
+reserve-core = { path = "crates/core" }
+
+stellar-xdr = { version = "27.0.0", features = ["base64", "std", "serde", "alloc"] }
+stellar-baselib = "0.5.8"
+stellar-strkey = "0.0.18"
+
+anyhow = "1"
+thiserror = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+reqwest = { version = "0.12", features = ["json", "rustls-tls"], default-features = false }
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "time", "signal", "sync"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+ed25519-dalek = "2"
+sha2 = "0.10"
+hmac = "0.12"
+base64 = "0.22"
+hex = "0.4"

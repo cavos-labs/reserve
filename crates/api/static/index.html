@@ -1,0 +1,352 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Reserve - users never hold XLM</title>
+<meta name="description" content="Reserves and fees, charged in the token they already have. A Stellar sponsor. No key required." />
+<meta name="theme-color" content="#402aff" />
+<link rel="canonical" href="https://reserve.cavos.xyz/" />
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="Reserve" />
+<meta property="og:title" content="Reserve - users never hold XLM" />
+<meta property="og:description" content="Reserves and fees, charged in the token they already have." />
+<meta property="og:url" content="https://reserve.cavos.xyz/" />
+<meta name="twitter:card" content="summary" />
+<link rel="icon" type="image/png" href="/favicon.png" />
+<link rel="preload" href="/geist.woff2" as="font" type="font/woff2" crossorigin />
+<link rel="stylesheet" href="/site.css" />
+<script src="/wallets.js"></script>
+
+<header class="bar">
+  <div class="shell nav">
+    <a class="mark" href="/" aria-label="Reserve">
+      <svg width="20" height="25" viewBox="0 0 66 82" fill="currentColor" role="img" aria-hidden="true">
+        <g transform="translate(0,82) scale(0.1,-0.1)">
+          <path d="M148 630 l-148 -185 68 -3 c193 -9 236 39 230 264 l-3 108 -147 -184z M360 705 c1 -225 37 -269 217 -263 l83 3 -136 170 c-74 94 -142 177 -150 185 -12 12 -14 0 -14 -95z M125 223 c69 -87 136 -171 150 -188 l26 -30 -4 135 c-6 212 -29 240 -201 240 l-96 0 125 -157z M433 364 c-53 -26 -67 -70 -71 -224 -3 -118 -2 -133 11 -120 8 8 76 93 151 188 l136 172 -97 0 c-68 0 -108 -5 -130 -16z" />
+        </g>
+      </svg>
+    </a>
+    <nav>
+      <a href="/docs">Docs</a>
+      <a href="#key">Raise the limit</a>
+    </nav>
+  </div>
+</header>
+
+<div class="shell">
+  <section class="hero">
+    <div class="hero-copy">
+      <h1 class="rise">Users never hold XLM.</h1>
+      <p class="sub rise">Reserves and fees, charged in the token they already have.</p>
+      <div class="act rise">
+        <a class="btn" href="/docs/quickstart">Start without a key</a>
+        <a class="btn btn-ghost" href="#key">Raise the limit</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="how" id="how">
+    <article class="await">
+      <p class="how-n">01</p>
+      <div>
+        <h2>The sponsor carries the reserves</h2>
+        <p>A sandwich opens around the user’s operations. Their minimum balance stays at zero.</p>
+      </div>
+    </article>
+    <article class="await">
+      <p class="how-n">02</p>
+      <div>
+        <h2>The user signs the inner transaction</h2>
+        <p>Reserve never holds a key. It signs only the outer fee-bump, which cannot change what they signed.</p>
+      </div>
+    </article>
+    <article class="await">
+      <p class="how-n">03</p>
+      <div>
+        <h2>A path payment buys the XLM</h2>
+        <p>Strict-receive through the DEX. Past the quoted sendMax, nothing happens and they pay nothing.</p>
+      </div>
+    </article>
+  </section>
+
+  <section class="band" id="limits">
+    <h2 class="await">A key is a bigger bucket, not a permission.</h2>
+    <p class="lede await">If thirty requests a minute is enough, skip the key. Paste the URL. The service answers either way.</p>
+    <div class="pair">
+      <article class="await">
+        <p class="amt" id="anon-rate">30<span> / min</span></p>
+        <h3>No key</h3>
+        <p>Paste the URL. Same endpoints.</p>
+      </article>
+      <article class="await">
+        <p class="amt" id="keyed-rate">600<span> / min</span></p>
+        <h3>Key</h3>
+        <p>Sign once with any Stellar wallet.</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="band" id="tokens">
+    <h2 class="await">Paid in what they hold.</h2>
+    <p class="lede await">Allowlisted assets with a route to XLM. Show the issuer domain, never the code alone.</p>
+    <div class="nets" id="nets" hidden>
+      <button type="button" data-net="testnet">Testnet</button>
+      <button type="button" data-net="mainnet">Mainnet</button>
+    </div>
+    <ul class="tokens await" id="token-list"></ul>
+    <div class="metrics">
+      <div class="await">
+        <strong>~0.001 USDC</strong>
+        <span>Per transaction</span>
+      </div>
+      <div class="await">
+        <strong>1.5 XLM</strong>
+        <span>Opening reserves, in the token</span>
+      </div>
+      <div class="await">
+        <strong>No custody</strong>
+        <span>The user signs every inner transaction</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="band key-block await" id="key">
+    <h2>Raise the limit</h2>
+    <p class="sub">Only if the base budget is too tight. Signing again returns the same key. Nothing is stored.</p>
+    <div class="act">
+      <button type="button" id="go">Raise the limit</button>
+    </div>
+    <p class="status" id="status" role="status" aria-live="polite">
+      Sign with any Stellar wallet. Thirty requests a minute need no key.
+    </p>
+    <div class="result" id="result" hidden>
+      <div class="field">
+        <div class="field-label">Your key</div>
+        <div class="value">
+          <code class="box" id="issued-key"></code>
+          <button class="copy" id="copy" type="button">Copy</button>
+        </div>
+      </div>
+      <div class="field">
+        <div class="field-label">Send it as</div>
+        <div class="value"><code class="box">Authorization: Bearer &lt;key&gt;</code></div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="site-foot await">
+    <p>
+      Reserve never holds user keys and never adds itself as a signer.
+      The remaining risk is blind-signing a server-built XDR, which is why
+      the SDK rebuilds the transaction before you sign.
+    </p>
+    <p>
+      The challenge is a transaction with sequence number zero, which the
+      network can never accept. See the <a href="/docs">docs</a>.
+    </p>
+  </footer>
+</div>
+
+<script type="module">
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (!reduce) {
+    document.documentElement.classList.add("js-motion");
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          if (!e.isIntersecting) continue;
+          e.target.classList.add("seen");
+          io.unobserve(e.target);
+        }
+      },
+      { rootMargin: "0px 0px -10% 0px", threshold: 0.16 },
+    );
+    document.querySelectorAll(".await").forEach((el) => io.observe(el));
+  }
+
+  const button = document.getElementById("go");
+  const statusEl = document.getElementById("status");
+  const resultEl = document.getElementById("result");
+  const keyEl = document.getElementById("issued-key");
+  const copyEl = document.getElementById("copy");
+  const say = (text, bad = false) => {
+    statusEl.textContent = text;
+    statusEl.dataset.bad = String(bad);
+  };
+  const post = async (path, body) => {
+    const res = await fetch(path, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    const parsed = await res.json();
+    if (!res.ok) throw new Error(parsed.message ?? "Request failed");
+    return parsed;
+  };
+
+  const PUBLIC = "Public Global Stellar Network ; September 2015";
+  let slug = "testnet";
+  let prefix = "";
+  let lane = null;
+  let kit;
+  const lanes = {};
+
+  const paintRates = (h) => {
+    const anon = document.getElementById("anon-rate");
+    const keyed = document.getElementById("keyed-rate");
+    if (h?.anon_per_minute) {
+      anon.replaceChildren(String(h.anon_per_minute), Object.assign(document.createElement("span"), { textContent: " / min" }));
+    }
+    if (h?.keyed_per_minute) {
+      keyed.replaceChildren(String(h.keyed_per_minute), Object.assign(document.createElement("span"), { textContent: " / min" }));
+    }
+  };
+  const paintTokens = (data) => {
+    const list = document.getElementById("token-list");
+    list.replaceChildren();
+    const known = data.known ?? [];
+    if (!known.length) {
+      const li = document.createElement("li");
+      li.textContent = "No allowlisted assets on this network yet.";
+      list.append(li);
+      return;
+    }
+    for (const t of known) {
+      const li = document.createElement("li");
+      li.append(t.code);
+      const small = document.createElement("small");
+      small.textContent = t.domain || t.issuer || "native";
+      li.append(small);
+      list.append(li);
+    }
+  };
+  const loadTokens = () => {
+    fetch(`${prefix}/v1/tokens`)
+      .then((r) => r.json())
+      .then(paintTokens)
+      .catch(() => {
+        const list = document.getElementById("token-list");
+        list.replaceChildren();
+        const li = document.createElement("li");
+        li.textContent = "Tokens load from this host when the API is up.";
+        list.append(li);
+      });
+  };
+  const select = (next) => {
+    slug = next;
+    prefix = `/${next}`;
+    lane = lanes[next] ?? null;
+    kit = undefined;
+    document.querySelectorAll("#nets button").forEach((b) => {
+      b.setAttribute("aria-current", String(b.dataset.net === next));
+    });
+    loadTokens();
+  };
+
+  const health = fetch("/health").then((r) => r.json()).catch(() => null);
+  health.then((h) => {
+    if (!h) return;
+    paintRates(h);
+    if (h.networks && typeof h.networks === "object") {
+      Object.assign(lanes, h.networks);
+      const available = Object.keys(lanes);
+      const nets = document.getElementById("nets");
+      nets.hidden = available.length < 2;
+      [...nets.querySelectorAll("button")].forEach((b) => {
+        b.hidden = !available.includes(b.dataset.net);
+        b.addEventListener("click", () => select(b.dataset.net));
+      });
+      const wanted = new URLSearchParams(location.search).get("network");
+      select(available.includes(wanted) ? wanted : available[0]);
+      return;
+    }
+    if (h.network) {
+      const one = h.network === PUBLIC ? "mainnet" : "testnet";
+      lanes[one] = h;
+      prefix = "";
+      slug = one;
+      lane = h;
+      loadTokens();
+    }
+  });
+
+  button.addEventListener("click", async () => {
+    button.disabled = true;
+    resultEl.hidden = true;
+    try {
+      const connected = await connector();
+      say("Pick a wallet.");
+      await connected.authModal();
+      const { address } = await connected.fetchAddress();
+      if (!address) throw new Error("The wallet returned no address.");
+      say("Asking for a challenge.");
+      const challenge = await post(`${prefix}/v1/challenge`, { address });
+      say("Sign the challenge in your wallet.");
+      const { signedTxXdr } = await connected.signTransaction(challenge.xdr, {
+        networkPassphrase: challenge.network_passphrase,
+        address,
+      });
+      say("Issuing.");
+      const issued = await post(`${prefix}/v1/keys`, { signed_xdr: signedTxXdr });
+      keyEl.textContent = issued.key;
+      resultEl.hidden = false;
+      resultEl.classList.remove("reveal");
+      void resultEl.offsetWidth;
+      resultEl.classList.add("reveal");
+      say(`${issued.requests_per_minute} requests per minute, for ${short(issued.id)}.`);
+      button.textContent = "Get it again";
+    } catch (e) {
+      say(e?.message ?? String(e), true);
+    } finally {
+      button.disabled = false;
+    }
+  });
+
+  copyEl.addEventListener("click", async () => {
+    try {
+      await navigator.clipboard.writeText(keyEl.textContent ?? "");
+      copyEl.textContent = "Copied";
+      setTimeout(() => (copyEl.textContent = "Copy"), 1600);
+    } catch {
+      copyEl.textContent = "Copy failed";
+      setTimeout(() => (copyEl.textContent = "Copy"), 1600);
+    }
+  });
+
+  const short = (address) => `${address.slice(0, 4)}…${address.slice(-4)}`;
+
+  async function connector() {
+    if (kit) return kit;
+    const { StellarWalletsKit, modules } = window.SWK ?? {};
+    if (!StellarWalletsKit) throw new Error("The wallet connector did not load. Reload the page.");
+    const live = lane
+      ?? (await fetch(`${prefix || ""}/health`).then((r) => r.json()))
+      ?? (await health);
+    StellarWalletsKit.init({
+      modules: modules(),
+      network: live.network,
+      authModal: { showInstallLabel: true, hideUnsupportedWallets: false },
+      theme: {
+        background: "#402aff",
+        "background-secondary": "#3925d9",
+        "foreground-strong": "#ffffff",
+        foreground: "#ffffff",
+        "foreground-secondary": "rgba(255,255,255,0.8)",
+        primary: "#ffffff",
+        "primary-foreground": "#402aff",
+        transparent: "transparent",
+        lighter: "rgba(255,255,255,0.12)",
+        light: "rgba(255,255,255,0.16)",
+        "light-gray": "rgba(255,255,255,0.24)",
+        gray: "rgba(255,255,255,0.6)",
+        danger: "#ffffff",
+        border: "rgba(255,255,255,0.16)",
+        shadow: "rgba(10,8,40,0.4)",
+        "border-radius": "0.375rem",
+        "font-family": "Geist, ui-sans-serif, system-ui, sans-serif",
+      },
+    });
+    kit = StellarWalletsKit;
+    return kit;
+  }
+</script>

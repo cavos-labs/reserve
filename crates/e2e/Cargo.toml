@@ -1,0 +1,19 @@
+[package]
+name = "reserve-e2e"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+
+[dependencies]
+reserve-core.workspace = true
+reserve-horizon.workspace = true
+reserve-signer.workspace = true
+stellar-xdr.workspace = true
+stellar-strkey.workspace = true
+tokio.workspace = true
+reqwest.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+anyhow.workspace = true
+rand = "0.9"

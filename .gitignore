@@ -1,0 +1,10 @@
+target
+sdk/ts/node_modules
+sdk/ts/dist
+.env
+.env.*
+!.env.example
+*.db
+*.db-wal
+*.db-shm
+.DS_Store

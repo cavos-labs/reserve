@@ -1,0 +1,30 @@
+{
+  "name": "@cavos/reserve",
+  "version": "0.1.0",
+  "description": "Pay Stellar reserves and fees with any token, from any wallet.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": ["dist", "README.md"],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "example": "npm run build && node examples/zero-xlm-account.mjs"
+  },
+  "peerDependencies": {
+    "@stellar/stellar-sdk": ">=12"
+  },
+  "devDependencies": {
+    "@stellar/stellar-sdk": "^14.0.0",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
+  }
+}

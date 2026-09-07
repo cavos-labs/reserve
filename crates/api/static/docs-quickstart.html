@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Quickstart - Reserve</title>
+<meta name="description" content="Quote and send with @cavos/reserve. No API key. Thirty requests a minute is enough to start." />
+<meta name="theme-color" content="#402aff" />
+<link rel="canonical" href="https://reserve.cavos.xyz/docs/quickstart" />
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="Reserve" />
+<meta property="og:title" content="Quickstart - Reserve" />
+<meta property="og:description" content="Quote and send with @cavos/reserve. No API key." />
+<meta property="og:url" content="https://reserve.cavos.xyz/docs/quickstart" />
+<meta name="twitter:card" content="summary" />
+<link rel="icon" type="image/png" href="/favicon.png" />
+<link rel="preload" href="/geist.woff2" as="font" type="font/woff2" crossorigin />
+<link rel="stylesheet" href="/site.css" />
+
+<header class="bar">
+  <div class="shell nav">
+    <a class="mark" href="/" aria-label="Reserve">
+      <svg width="20" height="25" viewBox="0 0 66 82" fill="currentColor" role="img" aria-hidden="true">
+        <g transform="translate(0,82) scale(0.1,-0.1)">
+          <path d="M148 630 l-148 -185 68 -3 c193 -9 236 39 230 264 l-3 108 -147 -184z M360 705 c1 -225 37 -269 217 -263 l83 3 -136 170 c-74 94 -142 177 -150 185 -12 12 -14 0 -14 -95z M125 223 c69 -87 136 -171 150 -188 l26 -30 -4 135 c-6 212 -29 240 -201 240 l-96 0 125 -157z M433 364 c-53 -26 -67 -70 -71 -224 -3 -118 -2 -133 11 -120 8 8 76 93 151 188 l136 172 -97 0 c-68 0 -108 -5 -130 -16z" />
+        </g>
+      </svg>
+    </a>
+    <nav>
+      <a href="/docs">Docs</a>
+      <a href="/#key">Raise the limit</a>
+    </nav>
+  </div>
+</header>
+
+<div class="shell">
+
+  <div class="docs">
+    <nav class="docs-nav" aria-label="Docs">
+      <a href="/docs">Overview</a>
+      <a href="/docs/quickstart" aria-current="page">Quickstart</a>
+      <a href="/docs/api">API</a>
+    </nav>
+
+    <article class="article">
+      <h1>Start without a key</h1>
+      <p>
+        No header. The same endpoints a keyed caller uses. Thirty requests a
+        minute is the unkeyed budget.
+      </p>
+
+      <h2>SDK</h2>
+      <pre class="code"><code>npm install @cavos/reserve @stellar/stellar-sdk</code></pre>
+      <pre class="code"><code>import { Reserve } from "@cavos/reserve";
+
+const reserve = new Reserve("testnet");
+// Mainnet: new Reserve("mainnet")
+
+const { hash } = await reserve.pay({
+  source,
+  destination,
+  amount: "10",
+  token: "USDC:GA5ZSEJ…",
+  maxSend: "0.05",
+}, (xdr, { networkPassphrase }) =>
+  wallet.signTransaction(xdr, { networkPassphrase }),
+);</code></pre>
+      <p>
+        The SDK keeps the request you made and refuses a quote, or a built
+        transaction, that does not match it. Do not call <code>/v1/build</code>
+        yourself and sign the bytes.
+      </p>
+
+      <h2 id="activate">Activate an account with a token</h2>
+      <p>
+        Someone with no account cannot hold XLM and cannot source a
+        transaction. Pay them a claimable balance first. Their first call
+        creates the account, opens the trustline, and claims, in one
+        transaction. Reserves and fees come out of the claimed token. Never
+        create the account empty: sponsored reserves on an address that never
+        comes back cannot be recovered.
+      </p>
+      <pre class="code"><code>await reserve.activate({
+  address: newAddress,
+  token: "USDC:GA5ZSEJ…",
+  balanceId,
+  maxSend: "5",
+}, sign);</code></pre>
+      <p>
+        1.5 XLM of opening reserves, paid in the token. The claimable balance
+        has to cover that plus the fee.
+      </p>
+
+      <h2>curl</h2>
+      <pre class="code"><code>curl -s "$RESERVE/testnet/v1/quote" \
+  -H 'content-type: application/json' \
+  -d '{
+    "source": "G…",
+    "fee_token": "USDC:GA5ZSEJ…",
+    "ops": [{
+      "type": "payment",
+      "destination": "G…",
+      "asset": "USDC:GA5ZSEJ…",
+      "amount": "10"
+    }]
+  }'</code></pre>
+      <p>
+        <code>GET /testnet/v1/tokens</code> or <code>GET /mainnet/v1/tokens</code>
+        lists what that network accepts as payment.
+      </p>
+
+      <p class="note">
+        Need more than thirty requests a minute?
+        <a href="/#key">Raise the limit</a>, sign once, and send
+        <code>Authorization: Bearer</code> on the same calls.
+      </p>
+    </article>
+  </div>
+</div>
