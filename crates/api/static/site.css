@@ -429,32 +429,52 @@ pre.code code { background: none; padding: 0; font-size: inherit; }
 .article li + li { margin-top: 0.45rem; }
 .article pre.code { margin-top: 1.15rem; }
 .article .btn { margin-top: 1.5rem; }
-.article a:not(.btn):not(.ends a):not(.map a) {
+.article a:not(.btn) {
   text-decoration: underline;
   text-underline-offset: 0.18em;
 }
+.article .ends a,
+.article .map a {
+  text-decoration: none;
+}
 
 .ends {
+  display: flex;
+  flex-direction: column;
+  list-style: none;
   margin: 2.25rem 0 0;
+  padding: 0;
   max-width: 38rem;
 }
+.article ul.ends {
+  margin: 2.25rem 0 0;
+  padding: 0;
+  max-width: 38rem;
+}
+.ends li {
+  display: block;
+  margin: 0;
+}
+.ends li + li { margin-top: 0; }
 .ends a {
-  display: grid;
-  grid-template-columns: 6.5rem minmax(0, 1fr);
-  gap: 1.25rem;
+  display: flex;
   align-items: baseline;
+  gap: 1.25rem;
   padding: 0.95rem 0;
   border-top: 1px solid var(--hairline);
   text-decoration: none;
 }
-.ends a:last-child { border-bottom: 1px solid var(--hairline); }
+.ends li:last-child a { border-bottom: 1px solid var(--hairline); }
 .ends span {
+  flex: 0 0 6.5rem;
   font-size: 0.75rem;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--ink-soft);
 }
 .ends code {
+  flex: 1 1 auto;
+  min-width: 0;
   color: var(--ink);
   font-size: 0.8125rem;
   word-break: break-all;

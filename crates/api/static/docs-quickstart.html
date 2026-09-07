@@ -16,7 +16,7 @@
 <link rel="alternate" type="application/yaml" href="https://reserve.cavos.xyz/openapi.yaml" title="OpenAPI" />
 <link rel="icon" type="image/png" href="/favicon.png" />
 <link rel="preload" href="/geist.woff2" as="font" type="font/woff2" crossorigin />
-<link rel="stylesheet" href="/site.css" />
+<link rel="stylesheet" href="/site.css?v=2" />
 
 <header class="bar">
   <div class="shell nav">
@@ -53,20 +53,26 @@
         the testnet URL.
       </p>
 
-      <div class="ends">
-        <a href="https://reserve.cavos.xyz">
-          <span>Site</span>
-          <code>https://reserve.cavos.xyz</code>
-        </a>
-        <a href="https://reserve.cavos.xyz/testnet">
-          <span>Testnet</span>
-          <code>https://reserve.cavos.xyz/testnet</code>
-        </a>
-        <a href="https://reserve.cavos.xyz/mainnet">
-          <span>Mainnet</span>
-          <code>https://reserve.cavos.xyz/mainnet</code>
-        </a>
-      </div>
+      <ul class="ends">
+        <li>
+          <a href="https://reserve.cavos.xyz">
+            <span>Site</span>
+            <code>https://reserve.cavos.xyz</code>
+          </a>
+        </li>
+        <li>
+          <a href="https://reserve.cavos.xyz/testnet">
+            <span>Testnet</span>
+            <code>https://reserve.cavos.xyz/testnet</code>
+          </a>
+        </li>
+        <li>
+          <a href="https://reserve.cavos.xyz/mainnet">
+            <span>Mainnet</span>
+            <code>https://reserve.cavos.xyz/mainnet</code>
+          </a>
+        </li>
+      </ul>
 
       <h2>SDK</h2>
       <pre class="code"><code>npm install @cavos/reserve @stellar/stellar-sdk</code></pre>

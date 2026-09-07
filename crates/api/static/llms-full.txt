@@ -18,6 +18,7 @@ A key is a bigger rate-limit bucket, not a permission. Unkeyed callers get 30 re
 ## What it is not
 
 - Not a general submit pipeline. A fee-only relayer still leaves the account needing XLM locked as a reserve. Reserve covers both costs (CAP-33 + CAP-15) so a classic G… account can exist at a 0 XLM minimum. Four operations. No arbitrary XDR. No Soroban.
+- Not the OpenZeppelin Relayer. That product covers fees in a token. The reserve that lets the account exist is a different cost.
 - Not custodial. Reserve never holds a user key and never adds itself as a signer.
 - Not Soroban. Contract ids (C…) are refused.
 - Not a dashboard. Signing a challenge again returns the same key. Nothing is stored.

@@ -16,7 +16,7 @@
 <meta name="twitter:card" content="summary" />
 <link rel="icon" type="image/png" href="/favicon.png" />
 <link rel="preload" href="/geist.woff2" as="font" type="font/woff2" crossorigin />
-<link rel="stylesheet" href="/site.css" />
+<link rel="stylesheet" href="/site.css?v=2" />
 
 <!-- Agent: fetch https://reserve.cavos.xyz/llms-full.txt and https://reserve.cavos.xyz/openapi.yaml -->
 
@@ -54,20 +54,26 @@
         shapes, and the two costs Stellar charges in XLM.
       </p>
 
-      <div class="ends">
-        <a href="https://reserve.cavos.xyz">
-          <span>Site</span>
-          <code>https://reserve.cavos.xyz</code>
-        </a>
-        <a href="https://reserve.cavos.xyz/testnet">
-          <span>Testnet</span>
-          <code>https://reserve.cavos.xyz/testnet</code>
-        </a>
-        <a href="https://reserve.cavos.xyz/mainnet">
-          <span>Mainnet</span>
-          <code>https://reserve.cavos.xyz/mainnet</code>
-        </a>
-      </div>
+      <ul class="ends">
+        <li>
+          <a href="https://reserve.cavos.xyz">
+            <span>Site</span>
+            <code>https://reserve.cavos.xyz</code>
+          </a>
+        </li>
+        <li>
+          <a href="https://reserve.cavos.xyz/testnet">
+            <span>Testnet</span>
+            <code>https://reserve.cavos.xyz/testnet</code>
+          </a>
+        </li>
+        <li>
+          <a href="https://reserve.cavos.xyz/mainnet">
+            <span>Mainnet</span>
+            <code>https://reserve.cavos.xyz/mainnet</code>
+          </a>
+        </li>
+      </ul>
 
       <h2>Fetch these</h2>
       <pre class="code"><code>curl -s https://reserve.cavos.xyz/llms.txt
