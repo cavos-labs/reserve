@@ -58,7 +58,7 @@ a {
   margin: 0 auto;
   padding: 0 4.5rem;
 }
-@media (max-width: 48rem) { .shell { padding: 0 1.5rem; } }
+@media (max-width: 48rem) { .shell { padding: 0 1.25rem; } }
 
 .bar {
   position: sticky;
@@ -389,9 +389,7 @@ pre.code code { background: none; padding: 0; font-size: inherit; }
   grid-template-columns: 10rem minmax(0, 38rem);
   gap: 5rem;
   padding: 3.5rem 0 7rem;
-}
-@media (max-width: 48rem) {
-  .docs { grid-template-columns: minmax(0, 1fr); gap: 2rem; padding-top: 2rem; }
+  min-width: 0;
 }
 
 .docs-nav {
@@ -477,7 +475,8 @@ pre.code code { background: none; padding: 0; font-size: inherit; }
   min-width: 0;
   color: var(--ink);
   font-size: 0.8125rem;
-  word-break: break-all;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .article .costs {
@@ -535,6 +534,56 @@ pre.code code { background: none; padding: 0; font-size: inherit; }
 }
 .js-motion .await:nth-child(2) { transition-delay: 0.06s; }
 .js-motion .await:nth-child(3) { transition-delay: 0.12s; }
+
+@media (max-width: 48rem) {
+  .nav { gap: 1rem; }
+  .nav nav { gap: 1rem; font-size: 0.875rem; }
+
+  .docs {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.35rem;
+    padding: 1.15rem 0 5rem;
+  }
+
+  .docs-nav {
+    position: static;
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 1.25rem;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    margin-inline: -1.25rem;
+    padding: 0 1.25rem 0.85rem;
+    border-bottom: 1px solid var(--hairline);
+  }
+  .docs-nav::-webkit-scrollbar { display: none; }
+  .docs-nav a { flex: 0 0 auto; }
+
+  .article h1 {
+    font-size: clamp(1.85rem, 8.5vw, 2.35rem);
+    max-width: none;
+  }
+  .article h2 { margin-top: 2.35rem; }
+  .article p,
+  .article ul { max-width: none; }
+
+  .ends a {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.3rem;
+    align-items: start;
+  }
+  .ends span { flex: none; }
+
+  .map a {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.3rem;
+  }
+
+  .pair article { padding: 1.25rem 1.15rem 1.15rem; }
+}
 
 @media (prefers-reduced-transparency: reduce) {
   .bar {
