@@ -16,25 +16,30 @@
 <link rel="alternate" type="application/yaml" href="https://reserve.cavos.xyz/openapi.yaml" title="OpenAPI" />
 <link rel="icon" type="image/png" href="/favicon.png" />
 <link rel="preload" href="/geist.woff2" as="font" type="font/woff2" crossorigin />
-<link rel="stylesheet" href="/site.css?v=3" />
+<link rel="stylesheet" href="/site.css?v=7" />
+<script src="/site.js?v=3" defer></script>
+
+<a class="skip" href="#main">Skip to content</a>
 
 <header class="bar">
   <div class="shell nav">
-    <a class="mark" href="/" aria-label="Reserve">
+    <a class="mark" href="/" aria-label="Reserve, home">
       <svg width="20" height="25" viewBox="0 0 66 82" fill="currentColor" role="img" aria-hidden="true">
         <g transform="translate(0,82) scale(0.1,-0.1)">
           <path d="M148 630 l-148 -185 68 -3 c193 -9 236 39 230 264 l-3 108 -147 -184z M360 705 c1 -225 37 -269 217 -263 l83 3 -136 170 c-74 94 -142 177 -150 185 -12 12 -14 0 -14 -95z M125 223 c69 -87 136 -171 150 -188 l26 -30 -4 135 c-6 212 -29 240 -201 240 l-96 0 125 -157z M433 364 c-53 -26 -67 -70 -71 -224 -3 -118 -2 -133 11 -120 8 8 76 93 151 188 l136 172 -97 0 c-68 0 -108 -5 -130 -16z" />
         </g>
       </svg>
+      <span>Reserve</span>
     </a>
-    <nav>
-      <a href="/docs">Docs</a>
-      <a href="/#key">Raise the limit</a>
+    <nav aria-label="Main">
+      <a href="/docs" aria-current="page">Docs</a>
+      <a href="/docs/quickstart">Quickstart</a>
+      <a class="pill" href="/#key">Raise the limit</a>
     </nav>
   </div>
 </header>
 
-<div class="shell">
+<main id="main" class="shell">
 
   <div class="docs">
     <nav class="docs-nav" aria-label="Docs">
@@ -45,7 +50,6 @@
     </nav>
 
     <article class="article">
-      <p class="kicker">API</p>
       <h1>Quote, build, submit.</h1>
       <p>
         Quotes travel as an HMAC-signed payload. At submit the service rebuilds
@@ -118,4 +122,21 @@ POST /{network}/v1/keys       { signed_xdr }  → cav_…</code></pre>
       </p>
     </article>
   </div>
-</div>
+</main>
+
+<footer class="site-foot shell">
+  <div>
+    <p>
+      Reserve never holds user keys and never adds itself as a signer. The SDK
+      rebuilds every transaction locally before you sign it.
+    </p>
+  </div>
+  <nav class="foot-links" aria-label="Footer">
+    <a href="/docs">Overview</a>
+    <a href="/docs/quickstart">Quickstart</a>
+    <a href="/docs/api">API</a>
+    <a href="/docs/agents">Agents</a>
+    <a href="/openapi.yaml">openapi.yaml</a>
+    <a href="/llms-full.txt">llms-full.txt</a>
+  </nav>
+</footer>

@@ -14,31 +14,36 @@
 <meta name="twitter:card" content="summary" />
 <link rel="icon" type="image/png" href="/favicon.png" />
 <link rel="preload" href="/geist.woff2" as="font" type="font/woff2" crossorigin />
-<link rel="stylesheet" href="/site.css?v=3" />
+<link rel="stylesheet" href="/site.css?v=7" />
+<script src="/site.js?v=3" defer></script>
 <script src="/wallets.js"></script>
+
+<a class="skip" href="#main">Skip to content</a>
 
 <header class="bar">
   <div class="shell nav">
-    <a class="mark" href="/" aria-label="Reserve">
+    <a class="mark" href="/" aria-label="Reserve, home">
       <svg width="20" height="25" viewBox="0 0 66 82" fill="currentColor" role="img" aria-hidden="true">
         <g transform="translate(0,82) scale(0.1,-0.1)">
           <path d="M148 630 l-148 -185 68 -3 c193 -9 236 39 230 264 l-3 108 -147 -184z M360 705 c1 -225 37 -269 217 -263 l83 3 -136 170 c-74 94 -142 177 -150 185 -12 12 -14 0 -14 -95z M125 223 c69 -87 136 -171 150 -188 l26 -30 -4 135 c-6 212 -29 240 -201 240 l-96 0 125 -157z M433 364 c-53 -26 -67 -70 -71 -224 -3 -118 -2 -133 11 -120 8 8 76 93 151 188 l136 172 -97 0 c-68 0 -108 -5 -130 -16z" />
         </g>
       </svg>
+      <span>Reserve</span>
     </a>
-    <nav>
+    <nav aria-label="Main">
       <a href="/docs">Docs</a>
-      <a href="/key" aria-current="page">Raise the limit</a>
+      <a href="/docs/quickstart">Quickstart</a>
+      <a class="pill" href="/key" aria-current="page">Raise the limit</a>
     </nav>
   </div>
 </header>
 
-<div class="shell">
+<main id="main" class="shell">
   <section class="hero">
     <div class="hero-copy">
       <h1 class="rise">Raise the limit</h1>
-      <p class="sub rise">Only if the base budget is too tight. Signing again returns the same key. Nothing is stored.</p>
-      <div class="act rise">
+      <p class="sub rise" style="--d: 0.07s">Only if the base budget is too tight. Signing again returns the same key. Nothing is stored.</p>
+      <div class="act rise" style="--d: 0.14s">
         <button type="button" id="go">Raise the limit</button>
       </div>
       <p class="status" id="status" role="status" aria-live="polite">
@@ -59,7 +64,22 @@
       </div>
     </div>
   </section>
-</div>
+</main>
+
+<footer class="site-foot shell">
+  <div>
+    <p>
+      A key is identity, never authorisation. It only moves you to a larger
+      rate-limit bucket. Nothing about it is stored.
+    </p>
+  </div>
+  <nav class="foot-links" aria-label="Footer">
+    <a href="/docs">Overview</a>
+    <a href="/docs/quickstart">Quickstart</a>
+    <a href="/docs/api">API</a>
+    <a href="/docs/agents">Agents</a>
+  </nav>
+</footer>
 
 <script type="module">
   const button = document.getElementById("go");

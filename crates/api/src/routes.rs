@@ -126,6 +126,18 @@ fn site_router() -> Router {
             }),
         )
         .route(
+            "/site.js",
+            get(|| async {
+                (
+                    [
+                        (axum::http::header::CONTENT_TYPE, "text/javascript"),
+                        (axum::http::header::CACHE_CONTROL, "public, max-age=3600"),
+                    ],
+                    include_str!("../static/site.js"),
+                )
+            }),
+        )
+        .route(
             "/key",
             get(|| async { axum::response::Html(include_str!("../static/key.html")) }),
         )
