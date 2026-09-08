@@ -152,15 +152,33 @@ pub const MAINNET_TOKENS: &[KnownToken] = &[
 // * Everything else sharing these codes. The impostors are the reason this
 //   list exists.
 
-/// Testnet has no meaningful market, so nothing is allowlisted by default
-/// beyond the native asset; a deployment there is expected to name its own.
-pub const TESTNET_TOKENS: &[KnownToken] = &[KnownToken {
-    code: "XLM",
-    issuer: "",
-    domain: "stellar.org",
-    slippage_bps: 0,
-    note: "the native asset",
-}];
+/// Testnet: native plus the USDC issuers we actually use there.
+///
+/// The first USDC is the Cavos/Freighter test asset (order book on Testnet,
+/// not Circle). The second is Circle's Testnet USDC.
+pub const TESTNET_TOKENS: &[KnownToken] = &[
+    KnownToken {
+        code: "XLM",
+        issuer: "",
+        domain: "stellar.org",
+        slippage_bps: 0,
+        note: "the native asset",
+    },
+    KnownToken {
+        code: "USDC",
+        issuer: "GCKUFD5KAAM6DRSLODK55OVECMB5IJ5NSFQYFTBZRPOTJASUKTBZXGS2",
+        domain: "cavos.xyz",
+        slippage_bps: 500,
+        note: "Cavos Testnet USDC, not Circle. The asset Freighter and the Reserve demo send.",
+    },
+    KnownToken {
+        code: "USDC",
+        issuer: "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5",
+        domain: "centre.io",
+        slippage_bps: 200,
+        note: "Circle USDC on Testnet",
+    },
+];
 
 /// Look up a curated entry by its canonical asset string.
 pub fn find(asset: &Asset, network_passphrase: &str) -> Option<&'static KnownToken> {
@@ -284,9 +302,17 @@ mod tests {
     }
 
     #[test]
-    fn testnet_defaults_to_the_native_asset_only() {
+    fn testnet_defaults_to_native_and_usdc() {
         let list = Allowlist::parse("", TESTNET);
         assert!(list.allows(&parse_asset("native").unwrap()));
+        assert!(list.allows(
+            &parse_asset("USDC:GCKUFD5KAAM6DRSLODK55OVECMB5IJ5NSFQYFTBZRPOTJASUKTBZXGS2")
+                .unwrap()
+        ));
+        assert!(list.allows(
+            &parse_asset("USDC:GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5")
+                .unwrap()
+        ));
         assert!(!list.allows(&parse_asset(REAL_USDC).unwrap()));
     }
 
