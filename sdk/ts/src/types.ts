@@ -4,6 +4,19 @@ export type ReserveOp =
   | { type: "payment"; destination: string; asset: string; amount: string }
   | { type: "change_trust"; asset: string; limit?: string }
   /**
+   * Classic DEX swap. `send_amount` of `send_asset` leaves; at least `dest_min`
+   * of `dest_asset` arrives. `path` is the hops in between, if any.
+   */
+  | {
+      type: "path_payment_strict_send";
+      destination: string;
+      send_asset: string;
+      send_amount: string;
+      dest_asset: string;
+      dest_min: string;
+      path?: string[];
+    }
+  /**
    * Claim money left for this address. An account that does not exist yet is
    * only ever created alongside one of these: the reserves it needs are paid
    * for out of the funds arriving, not given away.

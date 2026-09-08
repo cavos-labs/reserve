@@ -21,6 +21,16 @@ pub enum UserOp {
         asset: String,
         amount: String,
     },
+    /// Classic DEX swap. `send_amount` leaves, at least `dest_min` arrives.
+    PathPaymentStrictSend {
+        destination: String,
+        send_asset: String,
+        send_amount: String,
+        dest_asset: String,
+        dest_min: String,
+        #[serde(default, skip_serializing_if = "Vec::is_empty")]
+        path: Vec<String>,
+    },
     /// Open a trustline, its reserve sponsored.
     ChangeTrust {
         asset: String,
@@ -91,6 +101,23 @@ impl Plan {
                 } => {
                     crate::asset::account_id(destination)?;
                     parse_asset(asset)?;
+                }
+                UserOp::PathPaymentStrictSend {
+                    destination,
+                    send_asset,
+                    dest_asset,
+                    path,
+                    ..
+                } => {
+                    crate::asset::account_id(destination)?;
+                    parse_asset(send_asset)?;
+                    parse_asset(dest_asset)?;
+                    if path.len() > 5 {
+                        return Err(Error::Unsupported("path too long".into()));
+                    }
+                    for hop in path {
+                        parse_asset(hop)?;
+                    }
                 }
                 UserOp::ClaimBalance { balance_id } => {
                     crate::build::parse_balance_id(balance_id)?;
@@ -221,6 +248,26 @@ mod tests {
         assert!(!plan.needs_sponsorship());
         assert_eq!(plan.op_count(), 2);
         assert_eq!(plan.reserve_stroops(5_000_000), 0);
+    }
+
+    #[test]
+    fn a_classic_swap_is_one_sponsored_operation() {
+        let plan = Plan::new(
+            vec![UserOp::PathPaymentStrictSend {
+                destination: G.into(),
+                send_asset: usdc(),
+                send_amount: "1".into(),
+                dest_asset: "native".into(),
+                dest_min: "5".into(),
+                path: vec![],
+            }],
+            true,
+        )
+        .unwrap();
+        assert_eq!(plan.mode, Mode::Sponsored);
+        assert!(!plan.needs_sponsorship());
+        // swap + fee payment
+        assert_eq!(plan.op_count(), 2);
     }
 
     #[test]
