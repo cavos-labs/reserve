@@ -84,6 +84,18 @@ function build(p: QuotePayload, tamper?: (b: TransactionBuilder) => void): strin
           ...(p.mode === "bootstrap" ? { source: p.source } : {}),
         }),
       );
+    } else if (op.type === "path_payment_strict_send") {
+      builder.addOperation(
+        Operation.pathPaymentStrictSend({
+          sendAsset: asset(op.send_asset),
+          sendAmount: op.send_amount,
+          destination: op.destination,
+          destAsset: asset(op.dest_asset),
+          destMin: op.dest_min,
+          path: (op.path ?? []).map(asset),
+          ...(p.mode === "bootstrap" ? { source: p.source } : {}),
+        }),
+      );
     } else {
       builder.addOperation(
         Operation.changeTrust({
@@ -136,9 +148,45 @@ function verify(xdr: string, p: QuotePayload, request?: ReserveRequest) {
 }
 
 describe("verifyTransaction", () => {
+  it("accepts a classic DEX swap", () => {
+    const p = payload({
+      ops: [
+        {
+          type: "path_payment_strict_send",
+          destination: USER,
+          send_asset: USDC,
+          send_amount: "1.0000000",
+          dest_asset: "native",
+          dest_min: "5.0000000",
+          path: [],
+        },
+      ],
+    });
+    expect(() => verify(build(p), p)).not.toThrow();
+  });
+
   it("accepts the transaction that was quoted", () => {
     const p = payload();
     expect(() => verify(build(p), p)).not.toThrow();
+  });
+
+  it("parses envelopes when stellar-sdk only exposes fromXdr", () => {
+    const p = payload();
+    const xdr = build(p);
+    const proto = TransactionBuilder as typeof TransactionBuilder & {
+      fromXdr?: typeof TransactionBuilder.fromXDR;
+      fromXDR?: typeof TransactionBuilder.fromXDR;
+    };
+    const originalXdr = proto.fromXdr;
+    const originalXDR = proto.fromXDR;
+    try {
+      proto.fromXdr = originalXDR ?? originalXdr;
+      delete proto.fromXDR;
+      expect(() => verify(xdr, p)).not.toThrow();
+    } finally {
+      proto.fromXdr = originalXdr;
+      proto.fromXDR = originalXDR;
+    }
   });
 
   it("accepts a sponsored trustline", () => {

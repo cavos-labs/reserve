@@ -27,6 +27,22 @@ function fail(message: string): never {
   throw new ReserveVerificationError(message);
 }
 
+/**
+ * stellar-sdk 12–14 export `fromXDR`. 17 renamed it to `fromXdr`. Freighter
+ * aliases `@stellar/stellar-sdk` onto that 17 build, so this has to accept both.
+ */
+function transactionFromXdr(xdrBase64: string, network: string): Transaction {
+  const builder = TransactionBuilder as typeof TransactionBuilder & {
+    fromXdr?: (envelope: string, networkPassphrase: string) => Transaction;
+    fromXDR?: (envelope: string, networkPassphrase: string) => Transaction;
+  };
+  const parse = builder.fromXdr ?? builder.fromXDR;
+  if (typeof parse !== "function") {
+    fail("stellar-sdk cannot parse a transaction envelope");
+  }
+  return parse.call(TransactionBuilder, xdrBase64, network) as Transaction;
+}
+
 /** Decimal token amount as a whole number of stroops. */
 export function amountToStroops(amount: string): string {
   const trimmed = amount.trim();
@@ -119,6 +135,17 @@ function sameOp(got: ReserveOp, want: ReserveOp): boolean {
         got.type === "claim_balance" &&
         got.balance_id.toLowerCase() === want.balance_id.toLowerCase()
       );
+    case "path_payment_strict_send":
+      return (
+        got.type === "path_payment_strict_send" &&
+        got.destination === want.destination &&
+        sameAssetString(got.send_asset, want.send_asset) &&
+        sameAmount(got.send_amount, want.send_amount) &&
+        sameAssetString(got.dest_asset, want.dest_asset) &&
+        sameAmount(got.dest_min, want.dest_min) &&
+        (got.path ?? []).length === (want.path ?? []).length &&
+        (got.path ?? []).every((hop, i) => sameAssetString(hop, (want.path ?? [])[i]!))
+      );
   }
 }
 
@@ -187,7 +214,7 @@ export function verifyTransaction(
 
   let tx: Transaction;
   try {
-    tx = TransactionBuilder.fromXDR(xdrBase64, payload.network) as Transaction;
+    tx = transactionFromXdr(xdrBase64, payload.network);
   } catch (e) {
     fail(`the built transaction could not be parsed (${(e as Error).message})`);
   }
@@ -334,6 +361,33 @@ function verifyOp(op: Operation, want: ReserveOp, i: number): void {
       if (want.limit !== undefined && !sameAmount(op.limit, want.limit)) {
         fail(`operation ${i} sets limit ${op.limit}, not ${want.limit}`);
       }
+      return;
+    }
+    case "path_payment_strict_send": {
+      if (op.type !== "pathPaymentStrictSend") {
+        fail(`operation ${i} is ${op.type}, expected pathPaymentStrictSend`);
+      }
+      if (op.destination !== want.destination) {
+        fail(`operation ${i} pays ${op.destination}, not ${want.destination}`);
+      }
+      if (!sameAsset(op.sendAsset, want.send_asset)) fail(`operation ${i} sends the wrong asset`);
+      if (!sameAmount(op.sendAmount, want.send_amount)) {
+        fail(`operation ${i} sends ${op.sendAmount}, not ${want.send_amount}`);
+      }
+      if (!sameAsset(op.destAsset, want.dest_asset)) fail(`operation ${i} buys the wrong asset`);
+      if (!sameAmount(op.destMin, want.dest_min)) {
+        fail(`operation ${i} requires ${op.destMin}, not ${want.dest_min}`);
+      }
+      const hops = op.path ?? [];
+      const quoted = want.path ?? [];
+      if (hops.length !== quoted.length) {
+        fail(`operation ${i} routes through ${hops.length} hops, ${quoted.length} were requested`);
+      }
+      hops.forEach((hop, h) => {
+        if (!sameAsset(hop, quoted[h]!)) {
+          fail(`operation ${i} hop ${h} is ${hop.getCode()}, not ${quoted[h]}`);
+        }
+      });
       return;
     }
   }

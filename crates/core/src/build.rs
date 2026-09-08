@@ -75,6 +75,24 @@ pub fn build_inner(quote: &Quote) -> Result<xdr::Transaction> {
                     amount: parse_amount(amount)?,
                 }),
             ),
+            UserOp::PathPaymentStrictSend {
+                destination,
+                send_asset,
+                send_amount,
+                dest_asset,
+                dest_min,
+                path,
+            } => op(
+                user_source.clone(),
+                xdr::OperationBody::PathPaymentStrictSend(xdr::PathPaymentStrictSendOp {
+                    send_asset: to_xdr_asset(&parse_asset(send_asset)?)?,
+                    send_amount: parse_amount(send_amount)?,
+                    destination: muxed_account(destination)?,
+                    dest_asset: to_xdr_asset(&parse_asset(dest_asset)?)?,
+                    dest_min: parse_amount(dest_min)?,
+                    path: path_assets(path)?,
+                }),
+            ),
             UserOp::ClaimBalance { balance_id } => op(
                 user_source.clone(),
                 xdr::OperationBody::ClaimClaimableBalance(xdr::ClaimClaimableBalanceOp {
@@ -177,6 +195,16 @@ fn sponsorship_source(quote: &Quote, sponsor: &str) -> Result<Option<xdr::MuxedA
     } else {
         Ok(Some(muxed_account(sponsor)?))
     }
+}
+
+fn path_assets(path: &[String]) -> Result<xdr::VecM<xdr::Asset, 5>> {
+    let assets = path
+        .iter()
+        .map(|a| to_xdr_asset(&parse_asset(a)?))
+        .collect::<Result<Vec<_>>>()?;
+    assets
+        .try_into()
+        .map_err(|_| Error::Unsupported("path too long".into()))
 }
 
 fn op(source: Option<xdr::MuxedAccount>, body: xdr::OperationBody) -> xdr::Operation {
@@ -344,6 +372,36 @@ mod tests {
             tx_to_xdr(&build_inner(&q).unwrap()).unwrap(),
             tx_to_xdr(&build_inner(&q).unwrap()).unwrap()
         );
+    }
+
+    #[test]
+    fn a_strict_send_swap_is_in_the_inner_transaction() {
+        let usdc = format!("USDC:{SPONSOR}");
+        let q = quote(
+            Mode::Sponsored,
+            vec![UserOp::PathPaymentStrictSend {
+                destination: USER.into(),
+                send_asset: usdc,
+                send_amount: "1".into(),
+                dest_asset: "native".into(),
+                dest_min: "5".into(),
+                path: vec![],
+            }],
+            0,
+        );
+        let tx = build_inner(&q).unwrap();
+        let swap = tx
+            .operations
+            .iter()
+            .find(|o| matches!(o.body, xdr::OperationBody::PathPaymentStrictSend(_)))
+            .expect("swap op");
+        match &swap.body {
+            xdr::OperationBody::PathPaymentStrictSend(op) => {
+                assert_eq!(op.send_amount, 10_000_000);
+                assert_eq!(op.dest_min, 50_000_000);
+            }
+            _ => unreachable!(),
+        }
     }
 
     #[test]
