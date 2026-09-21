@@ -8,7 +8,7 @@ use stellar_xdr as xdr;
 use xdr::{Limits, WriteXdr};
 
 use crate::asset::{account_id, muxed_account, parse_asset, to_change_trust_asset, to_xdr_asset};
-use crate::plan::{Mode, UserOp};
+use crate::plan::{Mode, UserOp, RECLAIM_AFTER_SECONDS};
 use crate::quote::Quote;
 use crate::{Error, Result};
 
@@ -107,6 +107,18 @@ pub fn build_inner(quote: &Quote) -> Result<xdr::Transaction> {
                         Some(l) => parse_amount(l)?,
                         None => MAX_TRUSTLINE_LIMIT,
                     },
+                }),
+            ),
+            UserOp::CreateClaimableBalance {
+                destination,
+                asset,
+                amount,
+            } => op(
+                user_source.clone(),
+                xdr::OperationBody::CreateClaimableBalance(xdr::CreateClaimableBalanceOp {
+                    asset: to_xdr_asset(&parse_asset(asset)?)?,
+                    amount: parse_amount(amount)?,
+                    claimants: claimable_claimants(user, destination)?,
                 }),
             ),
         });
@@ -212,6 +224,41 @@ fn op(source: Option<xdr::MuxedAccount>, body: xdr::OperationBody) -> xdr::Opera
         source_account: source,
         body,
     }
+}
+
+/// Destination can claim at once; the sender can reclaim after seven days.
+/// Sorted by account id — stellar-core rejects unsorted claimants.
+fn claimable_claimants(source: &str, destination: &str) -> Result<xdr::VecM<xdr::Claimant, 10>> {
+    if source == destination {
+        return Err(Error::Unsupported(
+            "cannot leave a claimable balance for yourself".into(),
+        ));
+    }
+    let dest = claimant(account_id(destination)?, xdr::ClaimPredicate::Unconditional);
+    let reclaim = claimant(account_id(source)?, reclaim_predicate());
+    let mut pair = vec![dest, reclaim];
+    pair.sort_by(|a, b| claimant_id(a).cmp(claimant_id(b)));
+    pair.try_into()
+        .map_err(|_| Error::Unsupported("claimants".into()))
+}
+
+fn claimant(destination: xdr::AccountId, predicate: xdr::ClaimPredicate) -> xdr::Claimant {
+    xdr::Claimant::ClaimantTypeV0(xdr::ClaimantV0 {
+        destination,
+        predicate,
+    })
+}
+
+fn claimant_id(claimant: &xdr::Claimant) -> &xdr::AccountId {
+    match claimant {
+        xdr::Claimant::ClaimantTypeV0(v0) => &v0.destination,
+    }
+}
+
+fn reclaim_predicate() -> xdr::ClaimPredicate {
+    xdr::ClaimPredicate::Not(Some(Box::new(xdr::ClaimPredicate::BeforeRelativeTime(
+        RECLAIM_AFTER_SECONDS,
+    ))))
 }
 
 /// Parse a 7-decimal amount string into stroops, rejecting anything else.
@@ -475,5 +522,71 @@ mod tests {
             xdr::OperationBody::ChangeTrust(c) => assert_eq!(c.limit, i64::MAX),
             other => panic!("expected changeTrust, got {other:?}"),
         }
+    }
+
+    #[test]
+    fn a_claimable_names_the_destination_and_a_sender_reclaim() {
+        let q = quote(
+            Mode::Sponsored,
+            vec![UserOp::CreateClaimableBalance {
+                destination: SPONSOR.into(),
+                asset: format!("USDC:{SPONSOR}"),
+                amount: "1.5".into(),
+            }],
+            10_000_000,
+        );
+        let tx = build_inner(&q).unwrap();
+        assert_eq!(tx.operations.len(), 4);
+        match &tx.operations[1].body {
+            xdr::OperationBody::CreateClaimableBalance(op) => {
+                assert_eq!(op.amount, 15_000_000);
+                assert_eq!(op.claimants.len(), 2);
+                let dest = account_id(SPONSOR).unwrap();
+                let sender = account_id(USER).unwrap();
+                let mut saw_dest = false;
+                let mut saw_reclaim = false;
+                for c in op.claimants.iter() {
+                    let xdr::Claimant::ClaimantTypeV0(v0) = c;
+                    if v0.destination == dest {
+                        saw_dest = true;
+                        assert!(matches!(v0.predicate, xdr::ClaimPredicate::Unconditional));
+                    } else if v0.destination == sender {
+                        saw_reclaim = true;
+                        assert_eq!(
+                            v0.predicate,
+                            xdr::ClaimPredicate::Not(Some(Box::new(
+                                xdr::ClaimPredicate::BeforeRelativeTime(RECLAIM_AFTER_SECONDS),
+                            )))
+                        );
+                    } else {
+                        panic!("unexpected claimant");
+                    }
+                }
+                assert!(saw_dest && saw_reclaim);
+                let ids: Vec<_> = op.claimants.iter().map(claimant_id).collect();
+                let mut sorted = ids.clone();
+                sorted.sort();
+                assert_eq!(ids, sorted);
+            }
+            other => panic!("expected createClaimableBalance, got {other:?}"),
+        }
+        assert!(matches!(
+            tx.operations[0].body,
+            xdr::OperationBody::BeginSponsoringFutureReserves(_)
+        ));
+    }
+
+    #[test]
+    fn a_claimable_to_yourself_is_refused() {
+        let q = quote(
+            Mode::Sponsored,
+            vec![UserOp::CreateClaimableBalance {
+                destination: USER.into(),
+                asset: format!("USDC:{SPONSOR}"),
+                amount: "1".into(),
+            }],
+            10_000_000,
+        );
+        assert!(build_inner(&q).is_err());
     }
 }

@@ -28,6 +28,11 @@ The signer is whatever your wallet already exposes — Freighter, Albedo, a bare
 `Keypair`. Nothing in this package is specific to any wallet or to any account
 type: any `G…` address works.
 
+`pay` looks at the destination. If it can receive a Payment, that is what is
+built. If there is no account, or no trustline, the money is left as a
+claimable balance the recipient opens with `activate`. The sender stays a
+claimant: if nobody claims it, they can take it back after seven days.
+
 ## Verification is the point
 
 The service builds the bytes a wallet is asked to sign. Comparing those bytes
@@ -98,7 +103,7 @@ something called "USDC".
 |---|---|
 | `new Reserve("testnet" \| "mainnet")` | hosted URL + pinned passphrase |
 | `Reserve.connect(network)` | same, plus sponsor pinned from `/health` |
-| `pay({ source, destination, amount, token, maxSend })` | one payment |
+| `pay({ source, destination, amount, token, maxSend })` | Payment, or a claimable if the dest is not ready |
 | `activate({ address, token, balanceId, maxSend })` | create + trust + claim |
 | `quote({ source, ops, feeToken?, maxSend })` | price classic operations |
 | `send(quote \| request, signer)` | build → verify → sign → submit |

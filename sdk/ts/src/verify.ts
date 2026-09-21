@@ -1,10 +1,13 @@
 import {
   Asset,
+  Claimant,
   Operation,
   Transaction,
   TransactionBuilder,
 } from "@stellar/stellar-sdk";
+import type { xdr } from "@stellar/stellar-sdk";
 
+import { reclaimPredicate, samePredicate } from "./claimable.js";
 import type {
   ReserveExpectations,
   ReserveOp,
@@ -134,6 +137,13 @@ function sameOp(got: ReserveOp, want: ReserveOp): boolean {
       return (
         got.type === "claim_balance" &&
         got.balance_id.toLowerCase() === want.balance_id.toLowerCase()
+      );
+    case "create_claimable_balance":
+      return (
+        got.type === "create_claimable_balance" &&
+        got.destination === want.destination &&
+        sameAssetString(got.asset, want.asset) &&
+        sameAmount(got.amount, want.amount)
       );
     case "path_payment_strict_send":
       return (
@@ -315,11 +325,11 @@ function verifyClassic(tx: Transaction, payload: QuotePayload, requested: Reserv
     if (op.source !== undefined && op.source !== payload.source) {
       fail(`operation ${i} is sourced by ${op.source}`);
     }
-    verifyOp(op, want, i);
+    verifyOp(op, want, i, payload.source);
   });
 }
 
-function verifyOp(op: Operation, want: ReserveOp, i: number): void {
+function verifyOp(op: Operation, want: ReserveOp, i: number, source: string): void {
   switch (want.type) {
     case "create_account": {
       if (op.type !== "createAccount") fail(`operation ${i} is ${op.type}, expected createAccount`);
@@ -388,6 +398,29 @@ function verifyOp(op: Operation, want: ReserveOp, i: number): void {
           fail(`operation ${i} hop ${h} is ${hop.getCode()}, not ${quoted[h]}`);
         }
       });
+      return;
+    }
+    case "create_claimable_balance": {
+      if (op.type !== "createClaimableBalance") {
+        fail(`operation ${i} is ${op.type}, expected createClaimableBalance`);
+      }
+      if (!sameAsset(op.asset, want.asset)) fail(`operation ${i} leaves the wrong asset`);
+      if (!sameAmount(op.amount, want.amount)) {
+        fail(`operation ${i} leaves ${op.amount}, not ${want.amount}`);
+      }
+      if (op.claimants.length !== 2) {
+        fail(`operation ${i} has ${op.claimants.length} claimants, expected 2`);
+      }
+      const dest = op.claimants.find((c) => c.destination === want.destination);
+      const reclaim = op.claimants.find((c) => c.destination === source);
+      if (!dest) fail(`operation ${i} does not name ${want.destination} as a claimant`);
+      if (!reclaim) fail(`operation ${i} does not name the sender as a reclaim claimant`);
+      if (!samePredicate(dest.predicate as xdr.ClaimPredicate, Claimant.predicateUnconditional())) {
+        fail(`operation ${i}: ${want.destination} cannot claim immediately`);
+      }
+      if (!samePredicate(reclaim.predicate as xdr.ClaimPredicate, reclaimPredicate())) {
+        fail(`operation ${i}: the sender cannot reclaim after seven days`);
+      }
       return;
     }
   }

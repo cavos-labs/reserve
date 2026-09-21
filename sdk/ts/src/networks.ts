@@ -8,10 +8,12 @@ export const HOSTED = {
   testnet: {
     url: "https://reserve.cavos.xyz/testnet",
     networkPassphrase: TESTNET,
+    horizonUrl: "https://horizon-testnet.stellar.org",
   },
   mainnet: {
     url: "https://reserve.cavos.xyz/mainnet",
     networkPassphrase: PUBLIC,
+    horizonUrl: "https://horizon.stellar.org",
   },
 } as const;
 
@@ -34,4 +36,8 @@ export function networkFromUrl(url: string): NetworkName | undefined {
     // Not a URL. Ignore.
   }
   return undefined;
+}
+
+export function horizonUrlOf(network: NetworkName): string {
+  return HOSTED[network].horizonUrl;
 }
