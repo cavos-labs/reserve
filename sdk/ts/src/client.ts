@@ -1,5 +1,5 @@
 import { amountToStroops, verifyQuote, verifyTransaction, ReserveVerificationError } from "./verify.js";
-import { HOSTED, networkFromUrl, passphraseOf, type NetworkName } from "./networks.js";
+import { HOSTED, horizonUrlOf, networkFromUrl, passphraseOf, TESTNET, PUBLIC, type NetworkName } from "./networks.js";
 import type {
   ReserveExpectations,
   KnownToken,
@@ -32,6 +32,11 @@ export interface ReserveOptions {
    * is refused. `Reserve.connect` pins this from `/health`.
    */
   sponsor?: string;
+  /**
+   * Horizon used by `pay` to see whether the destination can receive a Payment.
+   * Defaults from `network` / the passphrase.
+   */
+  horizonUrl?: string;
 }
 
 export type QuoteArgs = {
@@ -79,7 +84,16 @@ function resolve(input: NetworkName | ReserveOptions): Required<Pick<ReserveOpti
   }
   const networkPassphrase =
     input.networkPassphrase ?? (network ? passphraseOf(network) : undefined);
-  return { ...input, url, network, networkPassphrase };
+  const horizonUrl =
+    input.horizonUrl?.replace(/\/$/, "") ??
+    (network
+      ? horizonUrlOf(network)
+      : networkPassphrase === TESTNET
+        ? horizonUrlOf("testnet")
+        : networkPassphrase === PUBLIC
+          ? horizonUrlOf("mainnet")
+          : undefined);
+  return { ...input, url, network, networkPassphrase, horizonUrl };
 }
 
 function ceiling(request: QuoteArgs): number | string {
@@ -101,12 +115,14 @@ export class Reserve {
   private readonly doFetch: typeof globalThis.fetch;
   private readonly headers: Record<string, string>;
   private readonly expected: ReserveExpectations;
+  private readonly horizonUrl?: string;
 
   constructor(options: NetworkName | ReserveOptions) {
     const resolved = resolve(options);
     this.url = resolved.url;
     this.doFetch = resolved.fetch ?? globalThis.fetch.bind(globalThis);
     this.headers = resolved.headers ?? {};
+    this.horizonUrl = resolved.horizonUrl;
     this.expected = {
       ...(resolved.networkPassphrase !== undefined
         ? { networkPassphrase: resolved.networkPassphrase }
@@ -247,7 +263,7 @@ export class Reserve {
     return this.submit(quote, signed);
   }
 
-  /** One payment, fee taken in the same token. */
+  /** One payment, fee taken in the same token. Leaves a claimable if the dest cannot receive yet. */
   async pay(
     input: {
       source: string;
@@ -259,23 +275,82 @@ export class Reserve {
     },
     sign: Signer,
   ): Promise<SubmitResult> {
+    if (input.source === input.destination) {
+      throw new ReserveError(
+        "cannot leave a claimable balance for yourself",
+        "invalid_request",
+        0,
+      );
+    }
+    const ready = await this.destinationReady(input.destination, input.token);
     return this.send(
       {
         source: input.source,
         feeToken: input.token,
         maxSendStroops: input.maxSendStroops,
         maxSend: input.maxSend,
-        ops: [
-          {
-            type: "payment",
-            destination: input.destination,
-            asset: input.token,
-            amount: input.amount,
-          },
-        ],
+        ops: ready
+          ? [
+              {
+                type: "payment",
+                destination: input.destination,
+                asset: input.token,
+                amount: input.amount,
+              },
+            ]
+          : [
+              {
+                type: "create_claimable_balance",
+                destination: input.destination,
+                asset: input.token,
+                amount: input.amount,
+              },
+            ],
       },
       sign,
     );
+  }
+
+  /**
+   * Whether `destination` can take a Payment of `asset` right now: the account
+   * exists, and for a credit asset it has a live trustline.
+   */
+  async destinationReady(destination: string, asset: string): Promise<boolean> {
+    if (!this.horizonUrl) {
+      throw new ReserveError(
+        "pass a network so pay() can see whether the destination is ready",
+        "invalid_request",
+        0,
+      );
+    }
+    const res = await this.doFetch(`${this.horizonUrl}/accounts/${destination}`, {
+      headers: this.headers,
+    });
+    if (res.status === 404) return false;
+    if (!res.ok) {
+      throw new ReserveError(
+        `horizon could not load ${destination} (${res.status})`,
+        "horizon_error",
+        res.status,
+      );
+    }
+    if (asset === "native") return true;
+    const [code, issuer] = asset.split(":");
+    const account = (await res.json()) as {
+      balances: {
+        asset_type: string;
+        asset_code?: string;
+        asset_issuer?: string;
+        is_authorized?: boolean;
+        limit?: string;
+      }[];
+    };
+    return account.balances.some((line) => {
+      if (line.asset_code !== code || line.asset_issuer !== issuer) return false;
+      if (line.is_authorized === false) return false;
+      if (line.limit === "0" || line.limit === "0.0000000") return false;
+      return true;
+    });
   }
 
   /**

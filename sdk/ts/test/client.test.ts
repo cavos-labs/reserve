@@ -112,11 +112,27 @@ function client(
 ): Reserve {
   return new Reserve({
     url: "http://reserve.test",
-    networkPassphrase: options.networkPassphrase,
+    networkPassphrase: options.networkPassphrase ?? Networks.TESTNET,
     sponsor: options.sponsor,
     fetch: async (input, init) => {
       const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
       const path = new URL(url).pathname;
+      if (path.startsWith("/accounts/")) {
+        const id = path.slice("/accounts/".length);
+        if (id === SPONSOR) {
+          return respond(200, {
+            balances: [
+              {
+                asset_type: "credit_alphanum4",
+                asset_code: "USDC",
+                asset_issuer: ISSUER,
+                balance: "10",
+              },
+            ],
+          });
+        }
+        return new Response("", { status: 404 });
+      }
       const body = init?.body ? JSON.parse(String(init.body)) : undefined;
       return handler(path, body);
     },
@@ -305,6 +321,56 @@ describe("Reserve shortcuts", () => {
       source: USER,
       fee_token: USDC,
       ops: [{ type: "payment", destination: SPONSOR, asset: USDC, amount: "1.0000000" }],
+    });
+  });
+
+  it("pay leaves a claimable when the destination is not ready", async () => {
+    let asked: unknown;
+    const reserve = client((path, body) => {
+      if (path === "/v1/quote") {
+        asked = body;
+        return respond(
+          200,
+          quoteBody(
+            honest({
+              ops: [
+                {
+                  type: "create_claimable_balance",
+                  destination: THIEF,
+                  asset: USDC,
+                  amount: "1.0000000",
+                },
+              ],
+              reserve_stroops: 10_000_000,
+            }),
+          ),
+        );
+      }
+      return respond(200, { hash: "ab" });
+    });
+    await reserve
+      .pay(
+        {
+          source: USER,
+          destination: THIEF,
+          amount: "1.0000000",
+          token: USDC,
+          maxSend: "5",
+        },
+        () => "signed",
+      )
+      .catch(() => undefined);
+    expect(asked).toMatchObject({
+      source: USER,
+      fee_token: USDC,
+      ops: [
+        {
+          type: "create_claimable_balance",
+          destination: THIEF,
+          asset: USDC,
+          amount: "1.0000000",
+        },
+      ],
     });
   });
 

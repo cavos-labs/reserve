@@ -16,12 +16,17 @@ export type ReserveOp =
       dest_min: string;
       path?: string[];
     }
-  /**
-   * Claim money left for this address. An account that does not exist yet is
-   * only ever created alongside one of these: the reserves it needs are paid
-   * for out of the funds arriving, not given away.
-   */
-  | { type: "claim_balance"; balance_id: string };
+    /**
+     * Claim money left for this address. An account that does not exist yet is
+     * only ever created alongside one of these: the reserves it needs are paid
+     * for out of the funds arriving, not given away.
+     */
+    | { type: "claim_balance"; balance_id: string }
+    /**
+     * Leave money for `destination` when a Payment would fail. The service
+     * always adds the sender as a second claimant, reclaimable after seven days.
+     */
+    | { type: "create_claimable_balance"; destination: string; asset: string; amount: string };
 
 /**
  * What the caller asked for, and the most they are willing to spend on it.

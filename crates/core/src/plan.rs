@@ -10,6 +10,14 @@ use serde::{Deserialize, Serialize};
 use crate::asset::{parse_asset, Asset};
 use crate::{Error, Result};
 
+/// Seconds after creation before the sender can reclaim an unclaimed balance.
+/// The destination can claim immediately. Keep in sync with the TypeScript SDK.
+pub const RECLAIM_AFTER_SECONDS: i64 = 7 * 24 * 60 * 60;
+
+/// A claimable balance locks one base reserve per claimant (CAP-23). Reserve
+/// always names two: the destination, and the sender after [`RECLAIM_AFTER_SECONDS`].
+pub const CLAIMABLE_CLAIMANTS: u32 = 2;
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum UserOp {
@@ -44,6 +52,14 @@ pub enum UserOp {
         /// Horizon's 72-character hex balance id.
         balance_id: String,
     },
+    /// Leave money for `destination` when a Payment would fail — no account,
+    /// or no trustline. The built operation always adds the sender as a second
+    /// claimant so an unclaimed balance can be taken back after seven days.
+    CreateClaimableBalance {
+        destination: String,
+        asset: String,
+        amount: String,
+    },
 }
 
 /// How the inner transaction has to be shaped.
@@ -67,6 +83,8 @@ pub struct Plan {
     pub new_accounts: u32,
     /// New subentries created for the user (1 base reserve each).
     pub new_subentries: u32,
+    /// Claimants on new claimable balances (1 base reserve each).
+    pub new_claimants: u32,
 }
 
 impl Plan {
@@ -80,6 +98,7 @@ impl Plan {
         }
         let mut new_accounts = 0;
         let mut new_subentries = 0;
+        let mut new_claimants = 0;
         let mut claims = 0;
         for op in &ops {
             match op {
@@ -123,6 +142,15 @@ impl Plan {
                     crate::build::parse_balance_id(balance_id)?;
                     claims += 1;
                 }
+                UserOp::CreateClaimableBalance {
+                    destination,
+                    asset,
+                    amount: _,
+                } => {
+                    crate::asset::account_id(destination)?;
+                    parse_asset(asset)?;
+                    new_claimants += CLAIMABLE_CLAIMANTS;
+                }
             }
         }
         let mode = if account_exists {
@@ -130,6 +158,11 @@ impl Plan {
         } else {
             Mode::Bootstrap
         };
+        if mode == Mode::Bootstrap && new_claimants > 0 {
+            return Err(Error::Unsupported(
+                "an account that does not exist yet cannot send; it can only claim".into(),
+            ));
+        }
         // An account that does not exist yet has nothing to pay with, so
         // creating one only makes sense in the same transaction that funds it.
         // Otherwise the reserves would be a gift to an address that may never
@@ -148,16 +181,18 @@ impl Plan {
             ops,
             new_accounts,
             new_subentries,
+            new_claimants,
         })
     }
 
     pub fn needs_sponsorship(&self) -> bool {
-        self.new_accounts > 0 || self.new_subentries > 0
+        self.new_accounts > 0 || self.new_subentries > 0 || self.new_claimants > 0
     }
 
     /// XLM the sponsor will have locked (not spent) if this goes through.
     pub fn reserve_stroops(&self, base_reserve_stroops: i64) -> i64 {
-        (self.new_accounts as i64 * 2 + self.new_subentries as i64) * base_reserve_stroops
+        (self.new_accounts as i64 * 2 + self.new_subentries as i64 + self.new_claimants as i64)
+            * base_reserve_stroops
     }
 
     /// Operations in the built inner transaction: the sponsorship sandwich, the
@@ -281,5 +316,38 @@ mod tests {
         )
         .is_err());
         assert!(Plan::new(vec![], true).is_err());
+    }
+
+    #[test]
+    fn a_claimable_locks_one_reserve_per_claimant() {
+        let plan = Plan::new(
+            vec![UserOp::CreateClaimableBalance {
+                destination: G.into(),
+                asset: usdc(),
+                amount: "1".into(),
+            }],
+            true,
+        )
+        .unwrap();
+        assert_eq!(plan.mode, Mode::Sponsored);
+        assert!(plan.needs_sponsorship());
+        // Destination + sender reclaim.
+        assert_eq!(plan.reserve_stroops(5_000_000), 10_000_000);
+        // begin + create_claimable + end + fee payment.
+        assert_eq!(plan.op_count(), 4);
+    }
+
+    #[test]
+    fn a_new_account_cannot_send_a_claimable() {
+        let err = Plan::new(
+            vec![UserOp::CreateClaimableBalance {
+                destination: G.into(),
+                asset: usdc(),
+                amount: "1".into(),
+            }],
+            false,
+        )
+        .unwrap_err();
+        assert!(matches!(err, Error::Unsupported(_)));
     }
 }

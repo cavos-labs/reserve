@@ -211,8 +211,11 @@ money gone for good.
 
 So accounts are created at the moment they are funded, never before. Stellar
 already has the mechanism for sending to someone who has no account: a
-claimable balance. The recipient's first transaction creates the account, opens
-the trustline, claims the money and pays for all of it out of that money.
+claimable balance. `pay` builds one when the destination cannot receive a
+Payment — no account, or no trustline — and names the sender as a second
+claimant so an unclaimed balance can be taken back after seven days. The
+recipient's first transaction creates the account, opens the trustline, claims
+the money and pays for all of it out of that money.
 
 ## Client SDK
 

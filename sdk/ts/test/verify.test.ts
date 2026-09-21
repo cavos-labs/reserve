@@ -3,11 +3,14 @@ import {
   Account,
   Asset,
   BASE_FEE,
+  Claimant,
   Keypair,
   Networks,
   Operation,
   TransactionBuilder,
 } from "@stellar/stellar-sdk";
+
+import { claimableClaimants } from "../src/claimable.js";
 
 import { verifyTransaction, ReserveVerificationError } from "../src/verify.js";
 import type { ReserveRequest, QuotePayload } from "../src/types.js";
@@ -96,6 +99,15 @@ function build(p: QuotePayload, tamper?: (b: TransactionBuilder) => void): strin
           ...(p.mode === "bootstrap" ? { source: p.source } : {}),
         }),
       );
+    } else if (op.type === "create_claimable_balance") {
+      builder.addOperation(
+        Operation.createClaimableBalance({
+          asset: asset(op.asset),
+          amount: op.amount,
+          claimants: claimableClaimants(p.source, op.destination),
+          ...(p.mode === "bootstrap" ? { source: p.source } : {}),
+        }),
+      );
     } else {
       builder.addOperation(
         Operation.changeTrust({
@@ -148,6 +160,65 @@ function verify(xdr: string, p: QuotePayload, request?: ReserveRequest) {
 }
 
 describe("verifyTransaction", () => {
+  it("accepts a claimable that the sender can reclaim", () => {
+    const p = payload({
+      ops: [
+        {
+          type: "create_claimable_balance",
+          destination: SPONSOR,
+          asset: USDC,
+          amount: "1.0000000",
+        },
+      ],
+      reserve_stroops: 10_000_000,
+      inner_fee_stroops: 400,
+    });
+    expect(() => verify(build(p), p)).not.toThrow();
+  });
+
+  it("refuses a claimable without a sender reclaim", () => {
+    const p = payload({
+      ops: [
+        {
+          type: "create_claimable_balance",
+          destination: SPONSOR,
+          asset: USDC,
+          amount: "1.0000000",
+        },
+      ],
+      reserve_stroops: 10_000_000,
+      inner_fee_stroops: 400,
+    });
+    const built = build(p, (b) => {
+      (b as unknown as { operations: unknown[] }).operations = [];
+      b.addOperation(
+        Operation.beginSponsoringFutureReserves({
+          sponsoredId: USER,
+          source: SPONSOR,
+        }),
+      );
+      b.addOperation(
+        Operation.createClaimableBalance({
+          asset: new Asset("USDC", ISSUER),
+          amount: "1.0000000",
+          claimants: [new Claimant(SPONSOR, Claimant.predicateUnconditional())],
+        }),
+      );
+      b.addOperation(Operation.endSponsoringFutureReserves({ source: USER }));
+      b.addOperation(
+        Operation.pathPaymentStrictReceive({
+          sendAsset: new Asset("USDC", ISSUER),
+          sendMax: "0.0000303",
+          destination: SPONSOR,
+          destAsset: Asset.native(),
+          destAmount: "0.0000360",
+          path: [],
+        }),
+      );
+    });
+    expect(() => verify(built, p)).toThrow(/claimants/);
+  });
+
   it("accepts a classic DEX swap", () => {
     const p = payload({
       ops: [
