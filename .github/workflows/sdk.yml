@@ -1,0 +1,132 @@
+name: SDK
+
+# Build and test the TypeScript SDK on every change; publish to npm when a
+# merge to main carries a version that is not on the registry yet. Bumping the
+# version in sdk/ts/package.json is the deliberate release act — it goes
+# through PR review like any other change.
+#
+# Only paths under sdk/ts trigger this. The Rust service in crates/ ships as a
+# container and has its own lifecycle; it is not covered here.
+on:
+  pull_request:
+    paths: ["sdk/ts/**", ".github/workflows/sdk.yml"]
+  push:
+    branches: [main]
+    paths: ["sdk/ts/**", ".github/workflows/sdk.yml"]
+
+concurrency:
+  group: sdk-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: sdk/ts
+
+jobs:
+  test:
+    name: Build and test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: sdk/ts/package-lock.json
+
+      - run: npm ci
+
+      - run: npm run build
+
+      - run: npm test
+
+      # The published tarball is built here, from a clean checkout — never from
+      # a developer's dist/. Inspect what would ship before it can ship.
+      - name: Inspect package contents
+        run: |
+          npm pack --silent > /dev/null
+          tarball=$(ls -t *.tgz | head -1)
+          echo "Tarball: $tarball"
+          tar tzf "$tarball" | sed 's|^package/||' | sort
+
+          echo "--- scanning for credentials ---"
+          mkdir -p /tmp/pkgcheck && tar xzf "$tarball" -C /tmp/pkgcheck
+          # A Stellar secret seed is 56 chars starting with S, and this SDK is
+          # built to never hold one — finding a literal in the tarball means
+          # something went very wrong.
+          if grep -rInaE \
+            -e '\bS[A-Z2-7]{55}\b' \
+            -e '(PRIVATE_KEY|privateKey|secretKey)[[:space:]]*[:=][[:space:]]*.?[A-Za-z0-9+/=]{32,}' \
+            -e 'eyJhbGciOi[A-Za-z0-9_-]{10,}' \
+            -e '(SUPABASE_SERVICE_ROLE|SERVICE_ROLE_KEY|npm_[A-Za-z0-9]{30,})' \
+            -e 'sk_live_[A-Za-z0-9]{10,}' \
+            /tmp/pkgcheck/package --include='*.js' --include='*.mjs' --include='*.json' \
+            --include='*.ts'; then
+            echo "::error::Possible credential found in the package tarball. Refusing to continue."
+            exit 1
+          fi
+          echo "No credentials found."
+
+  publish:
+    name: Publish to npm
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write   # push the release tag
+      id-token: write   # npm provenance via OIDC
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: sdk/ts/package-lock.json
+          registry-url: "https://registry.npmjs.org"
+
+      - run: npm ci
+
+      # A merge without a version bump is normal (docs, refactors). Skip quietly
+      # instead of failing the run on npm's duplicate-version 403.
+      - name: Check whether this version is already published
+        id: check
+        run: |
+          name=$(node -p "require('./package.json').name")
+          version=$(node -p "require('./package.json').version")
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "tag=sdk-v$version" >> "$GITHUB_OUTPUT"
+          if npm view "$name@$version" version >/dev/null 2>&1; then
+            echo "$name@$version is already published — nothing to do."
+            echo "should_publish=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "$name@$version is new — will publish."
+            echo "should_publish=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build
+        if: steps.check.outputs.should_publish == 'true'
+        run: npm run build
+
+      - name: Test
+        if: steps.check.outputs.should_publish == 'true'
+        run: npm test
+
+      - name: Publish
+        if: steps.check.outputs.should_publish == 'true'
+        run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      # Tag only after a successful publish, so a tag always points at something
+      # that actually exists on the registry. Prefixed, because the Rust service
+      # in this repo versions separately.
+      - name: Tag the release
+        if: steps.check.outputs.should_publish == 'true'
+        working-directory: .
+        run: |
+          git tag "${{ steps.check.outputs.tag }}"
+          git push origin "${{ steps.check.outputs.tag }}"
