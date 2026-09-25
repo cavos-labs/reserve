@@ -1,9 +1,10 @@
 name: SDK
 
-# Build and test the TypeScript SDK on every change; publish to npm when a
-# merge to main carries a version that is not on the registry yet. Bumping the
-# version in sdk/ts/package.json is the deliberate release act — it goes
-# through PR review like any other change.
+# Build and test the TypeScript SDK on every change. A merge to main that
+# bumps sdk/ts/package.json stages that version on npm. The NPM_TOKEN in this
+# repo is stage-only, so `npm publish` is rejected with E_STAGE_REQUIRED; a
+# maintainer approves the staged version with 2FA before it is live. Re-run
+# this workflow after approving to create the sdk-vX.Y.Z tag.
 #
 # Only paths under sdk/ts trigger this. The Rust service in crates/ ships as a
 # container and has its own lifecycle; it is not covered here.
@@ -13,6 +14,7 @@ on:
   push:
     branches: [main]
     paths: ["sdk/ts/**", ".github/workflows/sdk.yml"]
+  workflow_dispatch:
 
 concurrency:
   group: sdk-${{ github.ref }}
@@ -72,12 +74,14 @@ jobs:
   publish:
     name: Publish to npm
     needs: test
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
       contents: write   # push the release tag
       id-token: write   # npm provenance via OIDC
+    env:
+      NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
     steps:
       - uses: actions/checkout@v4
 
@@ -88,10 +92,24 @@ jobs:
           cache-dependency-path: sdk/ts/package-lock.json
           registry-url: "https://registry.npmjs.org"
 
+      # `npm stage` needs CLI 11.15+ and Node 22.14+. setup-node's Node 22
+      # still ships npm 10, which does not have the command.
+      - name: Install npm with staged publishing
+        run: |
+          npm install -g npm@11
+          current=$(npm --version)
+          echo "npm $current"
+          required=11.15.0
+          oldest=$(printf '%s\n' "$required" "$current" | sort -V | head -1)
+          if [ "$oldest" != "$required" ]; then
+            echo "::error::npm $current cannot stage publishes (need >= $required)."
+            exit 1
+          fi
+
       - run: npm ci
 
       # A merge without a version bump is normal (docs, refactors). Skip quietly
-      # instead of failing the run on npm's duplicate-version 403.
+      # instead of failing the run on npm's duplicate-version 409.
       - name: Check whether this version is already published
         id: check
         run: |
@@ -100,11 +118,38 @@ jobs:
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "tag=sdk-v$version" >> "$GITHUB_OUTPUT"
           if npm view "$name@$version" version >/dev/null 2>&1; then
-            echo "$name@$version is already published — nothing to do."
+            echo "$name@$version is already published."
             echo "should_publish=false" >> "$GITHUB_OUTPUT"
+            echo "should_tag=true" >> "$GITHUB_OUTPUT"
+            echo "status=published" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "should_tag=false" >> "$GITHUB_OUTPUT"
+          staged=$(npm stage list "$name" --json 2>/dev/null || true)
+          if printf '%s' "$staged" | node -e '
+            const version = process.argv[1];
+            let raw = "";
+            process.stdin.on("data", (chunk) => { raw += chunk; });
+            process.stdin.on("end", () => {
+              let data;
+              try { data = JSON.parse(raw || "null"); }
+              catch { process.exit(1); }
+              const visit = (value) => {
+                if (!value || typeof value !== "object") return false;
+                if (value.version === version && (value.stageId || value.id)) return true;
+                return Object.values(value).some(visit);
+              };
+              process.exit(visit(data) ? 0 : 2);
+            });
+          ' "$version"; then
+            echo "$name@$version is already staged — approve it, then re-run this workflow."
+            echo "should_publish=false" >> "$GITHUB_OUTPUT"
+            echo "status=staged" >> "$GITHUB_OUTPUT"
           else
-            echo "$name@$version is new — will publish."
+            echo "$name@$version is new — will stage."
             echo "should_publish=true" >> "$GITHUB_OUTPUT"
+            echo "status=new" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Build
@@ -115,18 +160,25 @@ jobs:
         if: steps.check.outputs.should_publish == 'true'
         run: npm test
 
-      - name: Publish
+      - name: Stage on npm
         if: steps.check.outputs.should_publish == 'true'
-        run: npm publish --provenance --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm stage publish --provenance --access public
 
-      # Tag only after a successful publish, so a tag always points at something
-      # that actually exists on the registry. Prefixed, because the Rust service
-      # in this repo versions separately.
+      - name: Remind to approve the staged version
+        if: steps.check.outputs.status == 'new' || steps.check.outputs.status == 'staged'
+        run: |
+          echo "::notice title=Approve @cavos/reserve@${{ steps.check.outputs.version }}::This version is staged, not live. Approve it with 2FA from the Staged packages tab on npmjs.com, or locally: npm stage list @cavos/reserve && npm stage approve <stage-id>. Then re-run this workflow to create the ${{ steps.check.outputs.tag }} tag."
+
+      # Tag only once the version is actually on the registry. Prefixed, because
+      # the Rust service in this repo versions separately.
       - name: Tag the release
-        if: steps.check.outputs.should_publish == 'true'
+        if: steps.check.outputs.should_tag == 'true'
         working-directory: .
         run: |
-          git tag "${{ steps.check.outputs.tag }}"
-          git push origin "${{ steps.check.outputs.tag }}"
+          tag="${{ steps.check.outputs.tag }}"
+          if git ls-remote --exit-code --tags origin "refs/tags/${tag}" >/dev/null; then
+            echo "Tag ${tag} already exists."
+            exit 0
+          fi
+          git tag "$tag"
+          git push origin "$tag"
