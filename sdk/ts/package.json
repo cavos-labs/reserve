@@ -1,6 +1,6 @@
 {
   "name": "@cavos/reserve",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Pay Stellar reserves and fees with any token, from any wallet.",
   "license": "Apache-2.0",
   "author": "Cavos",
@@ -13,7 +13,10 @@
       "default": "./dist/index.js"
     }
   },
-  "files": ["dist", "README.md"],
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "sideEffects": false,
   "publishConfig": {
     "access": "public"
